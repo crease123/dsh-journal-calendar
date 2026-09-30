@@ -40,7 +40,7 @@ dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calend
 
 第一次会停下：pnpm 拒绝执行 git 托管包的构建脚本，除非你显式放行那个确切的包。`dsh` 会把该填进 profile 的 `pnpm-workspace.yaml` 里 `allowBuilds` 的键打印出来，填好再重跑即可。请把这项授权理解为「允许这个包的代码在安装时于你的机器上执行」；若想让装上的代码固定不变，就钉住 commit（`…#<sha>`）。
 
-两条路径都已验证：npm 预构建产物，以及走上述授权步骤的 git 安装。两者都启动无警告，并真实读写日期文件。
+两条路径都已端到端验证：打包出的 tarball（与 `npm publish` 发出的内容逐字节一致），以及上面那条走授权步骤的 `git+https://` 安装。两者都启动无警告，并真实读写日期文件。
 
 ## 记录存在哪
 

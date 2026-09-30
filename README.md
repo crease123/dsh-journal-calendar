@@ -40,7 +40,7 @@ dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calend
 
 The first attempt stops, because pnpm refuses to run a git-hosted package's build script until you allow that exact package. `dsh` prints the key to paste under `allowBuilds` in the profile's `pnpm-workspace.yaml`; add it and re-run. Treat that authorization as permission for this package's code to run on your machine at install time, and pin a commit (`…#<sha>`) if you want the installed code to stay fixed.
 
-Both paths are verified: the npm package prebuilt, and a git install through that authorization step. Each boots with no warnings and reads and writes real day files.
+Both paths are verified end to end: the packed tarball — byte-for-byte what `npm publish` ships — and the `git+https://` install above, through its authorization step. Each boots with no warnings and reads and writes real day files.
 
 ## Where your entries live
 
