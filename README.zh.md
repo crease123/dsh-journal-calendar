@@ -19,12 +19,12 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add dsh-journal-calendar
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.1.0/dsh-journal-calendar-0.1.0.tgz
 ```
 
 刷新页面，右侧栏出现 **日历** 标签页。
 
-`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm。卸载：
+这个地址给的是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm。卸载：
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
@@ -32,15 +32,15 @@ dsh plugin --profile web remove dsh-journal-calendar
 
 ### 改为从仓库安装
 
-npm 包里是预构建产物，不需要任何构建步骤。直接从 GitHub 安装拉的是**源码**，会在你机器上现场构建：
+从源码构建同样可行，也是还没有 Release 时的唯一方式：
 
 ```sh
 dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calendar
 ```
 
-第一次会停下：pnpm 拒绝执行 git 托管包的构建脚本，除非你显式放行那个确切的包。`dsh` 会把该填进 profile 的 `pnpm-workspace.yaml` 里 `allowBuilds` 的键打印出来，填好再重跑即可。请把这项授权理解为「允许这个包的代码在安装时于你的机器上执行」；若想让装上的代码固定不变，就钉住 commit（`…#<sha>`）。
+这条拉的是**源码**，会在你机器上现场构建。第一次会停下：pnpm 拒绝执行 git 托管包的构建脚本，除非你显式放行那个确切的包。`dsh` 会把该填进 profile 的 `pnpm-workspace.yaml` 里 `allowBuilds` 的键打印出来，填好再重跑即可。请把这项授权理解为「允许这个包的代码在安装时于你的机器上执行」；若想让装上的代码固定不变，就钉住 commit（`…#<sha>`）。
 
-两条路径都已端到端验证：打包出的 tarball（与 `npm publish` 发出的内容逐字节一致），以及上面那条走授权步骤的 `git+https://` 安装。两者都启动无警告，并真实读写日期文件。
+两条路径都已端到端验证：Release 的 tarball 全程不需要任何授权步骤，`git+https://` 那条走授权步骤也能装上。两者都启动无警告，并真实读写日期文件。
 
 ## 记录存在哪
 
@@ -134,6 +134,7 @@ npm publish
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.1.0/dsh-journal-calendar-0.1.0.tgz
 description:
   en: 'A daily journal the agent keeps for you. The journal_record tool appends entries to one JSON file per day under the DSH home, carrying the agent''s own record of what you did and what you intend to do; the right sidebar draws those files as a month calendar whose cells are marked by open todos, finished todos, or memories, with checkable todos and the selected day''s notes below. Entries are plain files you own and can edit.'
   zh: '助手替你维护的每日日志。journal_record 工具把条目追加到 DSH home 下一天一个的 JSON 文件里，记的是助手所见的「你做了什么、打算做什么」；右侧栏把这些文件画成月历，单元格按「有待办未完成 / 待办已完成 / 只有记事」三种状态标记，下方是可勾选的待办与所选日期的记事。条目是纯文件，归你所有，可直接编辑。'
