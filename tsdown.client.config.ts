@@ -15,12 +15,15 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { createRequire, isBuiltin } from 'node:module'
-import { basename, dirname, isAbsolute, resolve as resolvePath, sep } from 'node:path'
+import { dirname, isAbsolute, relative, resolve as resolvePath, sep } from 'node:path'
 import { defineConfig, type TsdownPlugin, type UserConfig } from 'tsdown'
 import { transform } from 'lightningcss'
 
 /** Package name this bundle registers under; also the Loader row's specifier. */
 const ID = 'dsh-journal-calendar'
+
+/** This package's root: virtual CSS ids are keyed relative to it, never by a machine path. */
+const PACKAGE_ROOT = import.meta.dirname
 
 /** Absolute path of the Host build's Remote-client artifact, inlined below. */
 const REMOTE_ARTIFACT = resolvePath(import.meta.dirname, 'lib/typert.remote-client.js')
@@ -75,12 +78,18 @@ function cssModulesInline(pluginId: string): TsdownPlugin {
       handler(source: string, importer: string | undefined) {
         if (!source.endsWith('.module.css')) return null
         const file = importer === undefined ? source : sourceAssetPath(source, importer)
-        return CSS_PREFIX + file + CSS_SUFFIX
+        // The virtual id is what rolldown prints verbatim in its `//#region`
+        // comments, so it must not carry a machine path: a bundle keyed by the
+        // absolute path leaks the author's home directory into the published
+        // package and cannot be reproduced on another machine. Key it by the
+        // package-relative name and resolve that at load time.
+        return CSS_PREFIX + relative(PACKAGE_ROOT, file) + CSS_SUFFIX
       },
     },
     async load(virtualId: string) {
       if (!virtualId.startsWith(CSS_PREFIX)) return null
-      const fileId = virtualId.slice(CSS_PREFIX.length, -CSS_SUFFIX.length)
+      const source = virtualId.slice(CSS_PREFIX.length, -CSS_SUFFIX.length)
+      const fileId = resolvePath(PACKAGE_ROOT, source)
       this.addWatchFile(fileId)
       const { code, exports: cssExports } = transform({
         filename: fileId,
@@ -94,7 +103,7 @@ function cssModulesInline(pluginId: string): TsdownPlugin {
       for (const [local, exported] of entries) classMap[local] = exported.name
       return [
         `const css = ${JSON.stringify(code.toString())};`,
-        `const tagId = ${JSON.stringify(`${pluginId}/${basename(fileId)}`)};`,
+        `const tagId = ${JSON.stringify(`${pluginId}/${source}`)};`,
         'if (typeof document !== \'undefined\' && document.querySelector(\'style[data-plugin-css=\' + JSON.stringify(tagId) + \']\') === null) {',
         '  const tag = document.createElement(\'style\');',
         `  tag.dataset.plugin = ${JSON.stringify(pluginId)};`,

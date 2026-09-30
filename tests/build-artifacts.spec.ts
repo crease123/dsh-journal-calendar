@@ -70,4 +70,16 @@ describe.skipIf(!existsSync(CLIENT_BUNDLE))('built client bundle', () => {
     const foreign = [...new Set(required)].filter(specifier => !PLATFORM_MODULES.has(specifier ?? ''))
     expect(foreign, 'the browser module table cannot answer these').toEqual([])
   })
+
+  it('carries no path from the machine that built it', async () => {
+    const code = await readFile(CLIENT_BUNDLE, 'utf8')
+
+    // A virtual module id keyed by an absolute path lands verbatim in
+    // rolldown's `//#region` comments. That is how a published bundle ends up
+    // naming its author's home directory, and why two machines cannot produce
+    // the same artifact.
+    // `\b` before the drive letter keeps `https://` (`s:/`) from reading as one.
+    const machinePath = /\/Users\/|\/home\/|\/root\/|\b[A-Za-z]:[\\/]/u.exec(code)
+    expect(machinePath?.[0], `bundle names a build-machine path near ${String(machinePath?.index)}`).toBeUndefined()
+  })
 })
