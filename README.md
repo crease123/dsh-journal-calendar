@@ -115,6 +115,8 @@ On Node `22.19.0` and `26.4.0`, the same acceptance run passes and the host arti
 
 Every DSH range names each supported release line explicitly, for example `>=0.1.7-rc.1 <0.2.0 || >=0.2.0-rc.1 <0.3.0-0`. This is not decoration: node-semver only lets a prerelease version satisfy a range when a comparator in that range shares the version's exact `major.minor.patch` tuple *and* carries a prerelease tag itself. A broad-looking `>=0.1.7-rc.1 <0.3.0` silently excludes `0.2.0-rc.2` — pnpm only warns, and the install resolves to something neither side intended. `tests/manifest.spec.ts` pins the ranges to the versions an acceptance run exercised.
 
+DSH reads these ranges at install time and refuses an incompatible plugin, restoring the profile manifest — verified by installing a deliberately-incompatible copy and watching it rejected. But DSH evaluates them with `includePrerelease`, so a range too broad for your package manager still passes there. That asymmetry is exactly why the ranges are pinned by a test instead of eyeballed.
+
 ## Publishing
 
 The repository is the source of truth for the npm package and for the community listing.
