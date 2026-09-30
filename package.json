@@ -111,6 +111,10 @@
     "typescript": "^6.0.0",
     "vitest": "^4.1.8"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dsh": {
     "manifestVersion": 1,
     "bundle": {

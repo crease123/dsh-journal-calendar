@@ -101,6 +101,12 @@ DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 
 那份 checkout 必须先构建过（`pnpm run build`）。凡是 `@Remote` 方法的名称、签名、返回类型变了，或者 Remote 错误码表变了，就重跑一次。`scripts/typert-identity.mjs` 写明产物需要的身份重写，而 `tests/build-artifacts.spec.ts` 会在重新生成后仍带着上游包名时让测试套件失败——Typert loader 会在启动时拒绝这种贡献。
 
+### publint 关于 `./client` 的那条警告
+
+`npx publint` 会报一条警告：`./lib/client.js` 是 CommonJS，却位于 `"type": "module"` 的包里，Node 会按 ESM 解读它。
+
+**不要改。** 浏览器模块表取的是这个文件的字节，再经 `window.__ModuleLoader__.load({ id, factory })` 物化；Node 从不解析或导入它，所以「按什么扩展名判定」这件事根本不适用。为了消掉这条警告而改名成 `.cjs`，会偏离所有 DSH 客户端插件的做法——它们全都是 `"type": "module"` 配 `lib/client.js`。
+
 ## 兼容性
 
 通过 `peerDependencies` 与 `engines.dsh` 声明。已对 DSH `0.1.7-rc.1` 与 `0.2.0-rc.2` 做过端到端验证：安装、启动、bundle 投递，以及 `month` / `day` / `setDone` 三个端点读写真实日期文件。
@@ -114,9 +120,11 @@ DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 本仓库同时是 npm 包与社区列表的事实来源。
 
 ```sh
-pnpm pack     # 先构建，再打出 dsh-journal-calendar-<version>.tgz
-npm publish   # 发布预构建产物
+npm login --registry https://registry.npmjs.org
+npm publish
 ```
+
+`prepack` 会在打包前构建，所以 `npm publish` 发的是编译产物，安装方不需要任何构建步骤。`publishConfig` 同时钉住了 public 访问级别与官方源——机器上若配置了镜像，否则会发到一个别人装不到的地方。用 `npm publish --dry-run` 可以核对究竟会发出什么。
 
 要进入 [dsh-market](https://github.com/dsh-market/dsh-market) 插件市场，向 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 注册表提一个**只加一个文件**的 PR——`data/plugins/crease123__dsh-journal-calendar.yml`：
 

@@ -101,6 +101,12 @@ DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 
 The checkout must be built first (`pnpm run build`). Rerun whenever a `@Remote` method's name, signature, or return type changes, or when the Remote error table changes. `scripts/typert-identity.mjs` states the identity rewrite the artifacts need, and `tests/build-artifacts.spec.ts` fails the suite if a regenerated artifact still names the upstream package — the Typert loader rejects such a contribution at boot.
 
+### The publint warning about `./client`
+
+`npx publint` reports one warning: `./lib/client.js` is CommonJS inside a `"type": "module"` package, so Node would read it as ESM.
+
+Leave it. The browser module table fetches that file's bytes and materializes it through `window.__ModuleLoader__.load({ id, factory })`; Node never resolves or imports it, so the extension it is judged by never applies. Renaming it to `.cjs` to silence the warning would depart from every DSH client plugin, all of which ship `lib/client.js` under `"type": "module"`.
+
 ## Compatibility
 
 Declared through `peerDependencies` and `engines.dsh`. Verified end to end against DSH `0.1.7-rc.1` and `0.2.0-rc.2`: install, boot, bundle delivery, and the `month` / `day` / `setDone` endpoints reading and writing real day files.
@@ -114,9 +120,11 @@ Every DSH range names each supported release line explicitly, for example `>=0.1
 The repository is the source of truth for the npm package and for the community listing.
 
 ```sh
-pnpm pack     # builds, then writes dsh-journal-calendar-<version>.tgz
-npm publish   # publishes the prebuilt tarball
+npm login --registry https://registry.npmjs.org
+npm publish
 ```
+
+`prepack` builds before the tarball is written, so `npm publish` ships compiled output and installs need no build step. `publishConfig` pins both the public access level and the official registry, because a machine configured against a mirror would otherwise publish somewhere no one else can install from. Check what would ship with `npm publish --dry-run`.
 
 To list it in the [dsh-market](https://github.com/dsh-market/dsh-market) plugin market, open a PR that adds **one file** — `data/plugins/crease123__dsh-journal-calendar.yml` — to the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) registry:
 
