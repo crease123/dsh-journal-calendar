@@ -1,0 +1,15 @@
+{
+  // Host face: the Cordis service, its Remote methods, and the tool.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
+  },
+  "files": [
+    "src/index.ts",
+    "src/service.ts",
+    "src/tool.ts",
+    "src/types.ts"
+  ]
+}

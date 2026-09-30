@@ -1,0 +1,10 @@
+{
+  // Browser compiler shape for the package's client face: DOM library, React
+  // JSX, and no ambient Node types.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2024", "DOM", "DOM.Iterable", "ESNext.Disposable"],
+    "types": []
+  }
+}

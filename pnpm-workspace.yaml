@@ -1,0 +1,8 @@
+# This repository is its own pnpm workspace root on purpose.
+#
+# Without this file pnpm walks up to the nearest `pnpm-workspace.yaml` and adopts
+# that ancestor as the workspace root — which is exactly what happens when this
+# package is developed inside a DeepSeek Harness checkout, and the install then
+# silently resolves against the wrong workspace. A single package needs no
+# members; the file's presence is what stops the walk.
+packages: []

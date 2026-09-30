@@ -1,0 +1,231 @@
+/* Calendar card for one right-Sidebar pane: month grid with per-day markers,
+   then the selected day's TO DO and MEMORY sections. Colors come from the
+   ui-theme semantic aliases; neutral rules are 0.5px hairlines. */
+
+.root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+  color: var(--dsw-alias-label-primary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: 1.5;
+}
+
+.header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.month {
+  font-weight: 500;
+}
+
+.nav {
+  appearance: none;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.nav:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.weekdays,
+.grid {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.weekdays {
+  text-align: center;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-caption, 11px);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cell:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+/* Selection: a subtle fill plus a brand ring, never a filled brand block —
+   the brand palette is a light surface in the dark theme, so white-on-white
+   made the day number disappear. The ring draws as an outline so the cell
+   does not move when selection changes. */
+.cellSelected,
+.cellSelected:hover {
+  background: var(--dsw-alias-interactive-bg-active, var(--dsw-alias-interactive-bg-hover));
+  outline: 1px solid var(--dsw-alias-brand-primary);
+  outline-offset: -1px;
+}
+
+.cellOutside {
+  visibility: hidden;
+}
+
+.markerRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 6px;
+}
+
+.dot,
+.todoMark {
+  corner-shape: round;
+  border-radius: 50%;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+}
+
+/* A pending todo keeps the day hollow; a finished one fills it. */
+.dotPending {
+  border: 1.5px solid var(--dsw-alias-label-secondary);
+}
+
+.dotDone {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+/* A day with memories and no todos gets its own colour. */
+.dotMemory {
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.day {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.dayTitle {
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.section {
+  margin: 8px 0 4px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-caption, 11px);
+  letter-spacing: 0.08em;
+}
+
+.todoRow {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.todoRow:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.todoRow:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.todoMark {
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--dsw-alias-label-secondary);
+}
+
+.todoMarkDone {
+  border-color: var(--dsw-alias-state-success-primary);
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.todoTitle {
+  flex: 1 1 auto;
+}
+
+.todoFinished {
+  color: var(--dsw-alias-label-tertiary);
+  text-decoration: line-through;
+}
+
+.time {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--dsh-content-font-size-caption, 11px);
+}
+
+.memory {
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.memoryHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.chips {
+  display: flex;
+  gap: 4px;
+}
+
+.chip {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-secondary);
+  font-size: var(--dsh-content-font-size-caption, 11px);
+  font-style: normal;
+}
+
+.empty {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.failure {
+  color: var(--dsw-alias-state-error-primary);
+}

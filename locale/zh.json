@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "日历与日志",
+    "description": "每天一个 JSON 文件：日历卡片读它，journal_record 往里写。关掉这一行会同时移除卡片并停止记录。"
+  }
+}

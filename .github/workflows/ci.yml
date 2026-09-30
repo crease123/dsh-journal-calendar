@@ -1,0 +1,34 @@
+# Build, typecheck, and test on every push and pull request.
+#
+# The runner needs nothing from a DeepSeek Harness checkout: every `@deepseek-ai`
+# package this package builds against comes from npm, and the generated Remote
+# artifacts are committed under `generated/`. That is the same property the
+# install path relies on.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      # Runs against the built bundle: tests/build-artifacts.spec.ts asserts the
+      # client artifact's module-loader handoff and its `require()` list, which
+      # only exist after a build.
+      - run: pnpm run test
+      - name: Pack the publishable tarball
+        run: pnpm pack

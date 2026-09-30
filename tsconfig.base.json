@@ -1,0 +1,29 @@
+{
+  // Shared compiler shape for the standalone dsh-journal-calendar repository.
+  // Mirrors the upstream Harness base closely enough that sources move between
+  // the two without edits: `.ts` import extensions are allowed and rewritten on
+  // emit, so the same `./service.ts` specifiers work in source and in `lib/`.
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2024", "ESNext.Disposable"],
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "incremental": true,
+    "types": ["node"]
+  }
+}

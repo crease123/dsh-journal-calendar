@@ -1,0 +1,18 @@
+{
+  // Client face: the calendar card and its copy. The Remote contribution is
+  // Host-face output staged into `lib/` by scripts/stage-typert.mjs, so it is
+  // not listed here.
+  "extends": "./tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/tsconfig.client.tsbuildinfo"
+  },
+  "files": [
+    "src/client/index.ts",
+    "src/client/CalendarCard.tsx",
+    "src/client/locales.ts",
+    "src/css-modules.d.ts",
+    "src/types.ts"
+  ]
+}

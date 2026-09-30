@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Journal and calendar",
+    "description": "One JSON file per day: the calendar card reads it, and journal_record appends to it. Turning this row off removes the card and stops recording."
+  }
+}

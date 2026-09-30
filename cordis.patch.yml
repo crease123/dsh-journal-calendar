@@ -1,0 +1,18 @@
+# Bundle patch layer for dsh-journal-calendar.
+#
+# One row mounts all three faces this package contributes:
+#   1. the day-file service on the Host, which the calendar card reads over the
+#      `journal` Remote namespace;
+#   2. the `journal_record` tool and its standing-duty prompt section;
+#   3. the calendar card itself, the browser half that rides along because this
+#      package declares `dsh.client` — the client module system attaches a
+#      package's half to the Loader row whose specifier is the bare package name.
+#
+# `dir` is left to the service default (`$DSH_HOME/journal`). Uncomment the
+# config block to keep the day files somewhere else.
+
+- insert:
+    - id: journal
+      name: dsh-journal-calendar
+      # config:
+      #   dir: /absolute/path/to/journal
