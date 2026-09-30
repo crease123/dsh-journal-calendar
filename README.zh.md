@@ -30,6 +30,18 @@ dsh plugin --profile web add dsh-journal-calendar
 dsh plugin --profile web remove dsh-journal-calendar
 ```
 
+### 改为从仓库安装
+
+npm 包里是预构建产物，不需要任何构建步骤。直接从 GitHub 安装拉的是**源码**，会在你机器上现场构建：
+
+```sh
+dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calendar
+```
+
+第一次会停下：pnpm 拒绝执行 git 托管包的构建脚本，除非你显式放行那个确切的包。`dsh` 会把该填进 profile 的 `pnpm-workspace.yaml` 里 `allowBuilds` 的键打印出来，填好再重跑即可。请把这项授权理解为「允许这个包的代码在安装时于你的机器上执行」；若想让装上的代码固定不变，就钉住 commit（`…#<sha>`）。
+
+两条路径都已验证：npm 预构建产物，以及走上述授权步骤的 git 安装。两者都启动无警告，并真实读写日期文件。
+
 ## 记录存在哪
 
 一天一个 JSON 文件，位于 `$DSH_HOME/journal/<YYYY-MM-DD>.json`（默认 `~/.dsh/journal`）。每个文件就是那一天的完整记录：
@@ -92,6 +104,8 @@ DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 ## 兼容性
 
 通过 `peerDependencies` 与 `engines.dsh` 声明。已对 DSH `0.1.7-rc.1` 与 `0.2.0-rc.2` 做过端到端验证：安装、启动、bundle 投递，以及 `month` / `day` / `setDone` 三个端点读写真实日期文件。
+
+在 Node `22.19.0` 与 `26.4.0` 上，同一套验收同样通过，宿主产物也能正常加载。Node `24`、`25` 位于两个已验证版本之间；`engines.node` 写的是 DSH 自身支持的两条发布线。
 
 每一条 DSH 范围都显式写出各条受支持的发布线，例如 `>=0.1.7-rc.1 <0.2.0 || >=0.2.0-rc.1 <0.3.0-0`。这不是装饰：node-semver 只有当范围里*某个*比较符与该版本的 `major.minor.patch` 元组完全一致、且自身也带预发布标签时，才放行预发布版本。看起来很宽的 `>=0.1.7-rc.1 <0.3.0` 会静默排除 `0.2.0-rc.2`——pnpm 只会警告，安装结果两边都不符合预期。`tests/manifest.spec.ts` 把范围钉在验收实际跑过的版本上。
 

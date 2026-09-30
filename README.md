@@ -30,6 +30,18 @@ Then reload the page. The **日历 / Journal** tab appears in the right sidebar.
 dsh plugin --profile web remove dsh-journal-calendar
 ```
 
+### Installing from the repository instead
+
+The npm package ships prebuilt, so it needs no build step. Installing straight from GitHub fetches **source** and builds it on your machine:
+
+```sh
+dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calendar
+```
+
+The first attempt stops, because pnpm refuses to run a git-hosted package's build script until you allow that exact package. `dsh` prints the key to paste under `allowBuilds` in the profile's `pnpm-workspace.yaml`; add it and re-run. Treat that authorization as permission for this package's code to run on your machine at install time, and pin a commit (`…#<sha>`) if you want the installed code to stay fixed.
+
+Both paths are verified: the npm package prebuilt, and a git install through that authorization step. Each boots with no warnings and reads and writes real day files.
+
 ## Where your entries live
 
 One JSON file per day, at `$DSH_HOME/journal/<YYYY-MM-DD>.json` (`~/.dsh/journal` by default). Each file is the complete record of that day:
@@ -92,6 +104,8 @@ The checkout must be built first (`pnpm run build`). Rerun whenever a `@Remote` 
 ## Compatibility
 
 Declared through `peerDependencies` and `engines.dsh`. Verified end to end against DSH `0.1.7-rc.1` and `0.2.0-rc.2`: install, boot, bundle delivery, and the `month` / `day` / `setDone` endpoints reading and writing real day files.
+
+On Node `22.19.0` and `26.4.0`, the same acceptance run passes and the host artifacts load. Node `24` and `25` sit between two verified versions; `engines.node` names the two release lines DSH itself supports.
 
 Every DSH range names each supported release line explicitly, for example `>=0.1.7-rc.1 <0.2.0 || >=0.2.0-rc.1 <0.3.0-0`. This is not decoration: node-semver only lets a prerelease version satisfy a range when a comparator in that range shares the version's exact `major.minor.patch` tuple *and* carries a prerelease tag itself. A broad-looking `>=0.1.7-rc.1 <0.3.0` silently excludes `0.2.0-rc.2` — pnpm only warns, and the install resolves to something neither side intended. `tests/manifest.spec.ts` pins the ranges to the versions an acceptance run exercised.
 
