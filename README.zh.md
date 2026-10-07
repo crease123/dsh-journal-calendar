@@ -105,6 +105,8 @@ DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 
 checkout 里的 `packages/typert/generator` 必须先构建过。凡是 `@Remote` 方法的名称、签名、返回类型变了，或者 Remote 错误码表变了，就重跑一次。`scripts/typert-identity.mjs` 写明产物需要的身份重写，而 `tests/build-artifacts.spec.ts` 会在重新生成后仍带着上游包名时让测试套件失败——Typert loader 会在启动时拒绝这种贡献。
 
+**重新生成之后要重启 DSH 宿主。** Typert loader 从包的 `./typert` 导出登记 Host 半边，并把 import 到的 manifest 按包名缓存在整个进程生命周期内；而热重载这个包只会撤下它的严格定义、不会补登记。结果是磁盘上的产物明明是对的，运行中的卡片却每次调用都报 `its strict definition was withdrawn and SRC fallback is forbidden`。重启一次，新文件就会被登记。
+
 ### publint 关于 `./client` 的那条警告
 
 `npx publint` 会报一条警告：`./lib/client.js` 是 CommonJS，却位于 `"type": "module"` 的包里，Node 会按 ESM 解读它。

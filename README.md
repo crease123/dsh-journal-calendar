@@ -105,6 +105,8 @@ DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 
 The checkout's `packages/typert/generator` must be built first. Rerun whenever a `@Remote` method's name, signature, or return type changes, or when the Remote error table changes. `scripts/typert-identity.mjs` states the identity rewrite the artifacts need, and `tests/build-artifacts.spec.ts` fails the suite if a regenerated artifact still names the upstream package — the Typert loader rejects such a contribution at boot.
 
+**Restart the DSH host after regenerating.** The Typert loader registers a package's Host face from its `./typert` export and caches the imported manifest per package name for the life of the process, while a hot reload of the package withdraws its strict definitions without committing a replacement. The running card then fails every call with `its strict definition was withdrawn and SRC fallback is forbidden`, even though the artifacts on disk are correct. A restart registers them once, from the new files.
+
 ### The publint warning about `./client`
 
 `npx publint` reports one warning: `./lib/client.js` is CommonJS inside a `"type": "module"` package, so Node would read it as ESM.
