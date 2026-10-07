@@ -18,7 +18,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import { CalendarCard, type CalendarInjected } from './CalendarCard.tsx'
 import { en, zh } from './locales.ts'
-import type { JournalDay, JournalEntry, JournalMonthDay } from '../types.ts'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../types.ts'
 
 /** Tab type identity; also the key of the body seat. */
 const ID = 'dsh-journal-calendar'
@@ -36,6 +36,8 @@ interface JournalRemote {
   month: (month: string) => Promise<RemoteResult<JournalMonthDay[]>>
   day: (date: string) => Promise<RemoteResult<JournalDay>>
   setDone: (id: string, done: boolean, date: string) => Promise<RemoteResult<JournalEntry>>
+  duty: () => Promise<RemoteResult<JournalDuty>>
+  setDuty: (text: string) => Promise<RemoteResult<JournalDuty>>
 }
 
 /** Unwrap a Remote result, raising its failure as a plain error. */
@@ -93,6 +95,12 @@ export function apply(ctx: ClientContext): void {
         months: t('months').split(','),
         monthHeading: t('monthHeading'),
         toggleTodo: t('toggleTodo'),
+        editDuty: t('editDuty'),
+        dutyTitle: t('dutyTitle'),
+        dutyCaption: t('dutyCaption'),
+        dutySave: t('dutySave'),
+        dutyCancel: t('dutyCancel'),
+        dutyReset: t('dutyReset'),
       },
       loadMonth: async (month) => {
         await mounted
@@ -105,6 +113,14 @@ export function apply(ctx: ClientContext): void {
       setDone: async (id, done, date) => {
         await mounted
         unwrap(await remote().setDone(id, done, date))
+      },
+      loadDuty: async () => {
+        await mounted
+        return unwrap(await remote().duty())
+      },
+      saveDuty: async (text) => {
+        await mounted
+        return unwrap(await remote().setDuty(text))
       },
     }),
   }, CalendarCard)), 'journal.body')

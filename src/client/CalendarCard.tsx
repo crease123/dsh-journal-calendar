@@ -1,9 +1,10 @@
 /**
  * Calendar card body for one right-Sidebar tab.
  *
- * Layout follows the owner's reference design: a month header with prev/next,
- * the weekday strip, a day grid whose cells carry a marker, and below it the
- * selected day's `TO DO` and `MEMORY` sections.
+ * Layout follows the owner's reference design: a month header with prev/next
+ * and the duty-editor button, the weekday strip, a day grid whose cells carry
+ * a marker, and below it the selected day's `TO DO` and `MEMORY` sections.
+ * The duty editor opens inline between the header and the weekday strip.
  *
  * Marker rule (from the owner's design):
  *   - todos exist and some are still open → hollow ring
@@ -14,11 +15,11 @@
  * @module dsh-journal-calendar/client/CalendarCard
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import clsx from 'clsx'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { JournalDay, JournalMonthDay } from '../types.ts'
+import type { JournalDay, JournalDuty, JournalMonthDay } from '../types.ts'
 import css from './CalendarCard.module.css'
 
 /** Copy resolved for the active locale by the plugin's inject face. */
@@ -34,6 +35,18 @@ export interface CalendarLabels {
   monthHeading: string
   /** Accessible name of a todo row's completion toggle. */
   toggleTodo: string
+  /** Accessible name of the header button that opens the duty editor. */
+  editDuty: string
+  /** The duty editor's heading. */
+  dutyTitle: string
+  /** One-line explanation of what the edited text becomes. */
+  dutyCaption: string
+  /** Duty editor: save button. */
+  dutySave: string
+  /** Duty editor: cancel button. */
+  dutyCancel: string
+  /** Duty editor: reset-to-default button. */
+  dutyReset: string
 }
 
 /** Data access handed to the body by the plugin's inject face. */
@@ -45,6 +58,10 @@ export interface CalendarInjected {
   loadDay: (date: string) => Promise<JournalDay>
   /** Flip one todo's completion flag. */
   setDone: (id: string, done: boolean, date: string) => Promise<void>
+  /** The effective duty prompt, prefilled into the editor. */
+  loadDuty: () => Promise<JournalDuty>
+  /** Replace the duty prompt; empty text restores the built-in sentence. */
+  saveDuty: (text: string) => Promise<JournalDuty>
 }
 
 /** The body's composed props: the tab it draws, the data face, and its copy. */
@@ -52,6 +69,90 @@ export type CalendarCardProps =
   & PropsRuntime<'sidebar.right.pane.tab'>
   & CalendarInjected
   & PropsLocale<'journal'>
+
+/** The duty editor's composed props: the data face's duty half, its copy, and the exit. */
+export interface DutyPanelProps {
+  labels: CalendarLabels
+  loadDuty: () => Promise<JournalDuty>
+  saveDuty: (text: string) => Promise<JournalDuty>
+  onClose: () => void
+}
+
+/**
+ * Inline editor for the duty prompt: prefills the effective text so tweaking
+ * one word is the common path, saves through the Host, and resets to the
+ * built-in sentence in one click. Save and reset both close the panel; only
+ * a failure keeps it open, with the error shown in place.
+ *
+ * @param props - the duty data face, copy, and close callback.
+ * @returns the panel.
+ */
+export function DutyPanel(props: DutyPanelProps): ReactNode {
+  const [draft, setDraft] = useState<string | undefined>(undefined)
+  const [busy, setBusy] = useState(false)
+  const [failure, setFailure] = useState<string | undefined>(undefined)
+
+  // Prefill once on mount. The latest-ref indirection keeps a parent
+  // re-render from re-fetching and wiping an in-progress edit.
+  const latest = useRef(props)
+  latest.current = props
+  useEffect(() => {
+    let live = true
+    void latest.current.loadDuty()
+      .then(duty => { if (live) setDraft(duty.text) })
+      .catch((error: unknown) => { if (live) setFailure(String(error)) })
+    return () => { live = false }
+  }, [])
+
+  const save = async (text: string): Promise<void> => {
+    setBusy(true)
+    setFailure(undefined)
+    try {
+      await props.saveDuty(text)
+      props.onClose()
+    } catch (error) {
+      setFailure(String(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className={css.duty}>
+      <div className={css.dutyTitle}>{props.labels.dutyTitle}</div>
+      <div className={css.dutyCaption}>{props.labels.dutyCaption}</div>
+      <textarea
+        className={css.dutyText}
+        rows={4}
+        value={draft ?? ''}
+        disabled={draft === undefined || busy}
+        onChange={event => setDraft(event.target.value)}
+      />
+      {failure === undefined ? null : <div className={css.failure}>{failure}</div>}
+      <div className={css.dutyButtons}>
+        <button type="button" className={css.dutyButton} disabled={busy} onClick={props.onClose}>
+          {props.labels.dutyCancel}
+        </button>
+        <button
+          type="button"
+          className={css.dutyButton}
+          disabled={busy}
+          onClick={() => { void save('') }}
+        >
+          {props.labels.dutyReset}
+        </button>
+        <button
+          type="button"
+          className={css.dutyPrimary}
+          disabled={busy || draft === undefined}
+          onClick={() => { void save(draft ?? '') }}
+        >
+          {props.labels.dutySave}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 /** Local date, matching the Host service's own day boundary. */
 function today(): string {
@@ -107,6 +208,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
   const [day, setDay] = useState<JournalDay | undefined>(undefined)
   const [failure, setFailure] = useState<string | undefined>(undefined)
   const [writing, setWriting] = useState<readonly string[]>([])
+  const [editing, setEditing] = useState(false)
 
   // Presentation-local data: the card is the only thing that knows which month
   // it is showing, so the fetch result lives in component state.
@@ -173,7 +275,25 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
         <span className={css.month}>{label}</span>
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
+        <button
+          type="button"
+          className={css.edit}
+          aria-label={props.labels.editDuty}
+          title={props.labels.editDuty}
+          onClick={() => setEditing(true)}
+        >
+          ✎
+        </button>
       </div>
+
+      {editing ? (
+        <DutyPanel
+          labels={props.labels}
+          loadDuty={props.loadDuty}
+          saveDuty={props.saveDuty}
+          onClose={() => setEditing(false)}
+        />
+      ) : null}
 
       <div className={css.weekdays}>
         {props.labels.weekdays.map((name, index) => <span key={`w${index}`}>{name}</span>)}

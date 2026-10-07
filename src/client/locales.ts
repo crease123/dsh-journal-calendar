@@ -27,6 +27,12 @@ export type CalendarKey =
   | 'months'
   | 'monthHeading'
   | 'toggleTodo'
+  | 'editDuty'
+  | 'dutyTitle'
+  | 'dutyCaption'
+  | 'dutySave'
+  | 'dutyCancel'
+  | 'dutyReset'
 
 /**
  * English dictionary.
@@ -45,6 +51,12 @@ export const en: Record<CalendarKey, string> = {
   months: 'January,February,March,April,May,June,July,August,September,October,November,December',
   monthHeading: '{month} {year}',
   toggleTodo: 'Toggle done',
+  editDuty: 'Edit journal duty',
+  dutyTitle: 'Journal duty',
+  dutyCaption: 'This text is inserted into the system prompt as the assistant\'s journal duty. Clear and save to restore the built-in sentence.',
+  dutySave: 'Save',
+  dutyCancel: 'Cancel',
+  dutyReset: 'Reset',
 }
 
 /** Chinese dictionary. */
@@ -58,4 +70,10 @@ export const zh: Record<CalendarKey, string> = {
   months: '1,2,3,4,5,6,7,8,9,10,11,12',
   monthHeading: '{year} 年 {month} 月',
   toggleTodo: '切换完成状态',
+  editDuty: '编辑日记职责',
+  dutyTitle: '日记职责',
+  dutyCaption: '这段文字会作为助手的日记职责插入系统提示词。清空后保存即恢复内置句子。',
+  dutySave: '保存',
+  dutyCancel: '取消',
+  dutyReset: '恢复默认',
 }
