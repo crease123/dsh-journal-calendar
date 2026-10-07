@@ -75,6 +75,10 @@ The plugin registers the `journal_record` tool and one prompt sentence telling t
 
 Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
 
+### Editing the duty sentence
+
+That prompt sentence is yours to rewrite. The calendar card carries a ✎ button beside the month heading: it opens an inline editor prefilled with the text now in effect, with Save, Reset, and Cancel. The text lands in `$DSH_HOME/journal/duty.md` (beside the day files, following `dir`), and the **next message** already carries it — the section is re-read on every prompt assembly, with no reload. Clearing the editor and saving removes the file and restores the built-in sentence. The limit is 2000 characters; the text is inserted verbatim, so `{{` in it is your own writing, not a variable reference.
+
 ## Development
 
 ```sh
@@ -91,15 +95,15 @@ The repository owns its own tool roots — `pnpm-workspace.yaml` and `vitest.con
 
 `generated/` holds the Typert artifacts (`typert.host.*`, `typert.remote-client.*`) that the Host contributes and the browser bundle inlines. They are **generated, not built here**:
 
-`@deepseek-ai/dsh-typert-generator` discovers contributing packages only under `<root>/packages`, and identifies `TypertRemoteService` by requiring that symbol to be declared in a *registered* package. A package that takes `@deepseek-ai/dsh-typert-protocol` from `node_modules` therefore can never be analyzed.
+`@deepseek-ai/dsh-typert-generator` discovers contributing packages only under `<root>/packages`, and identifies `TypertRemoteService` by requiring that symbol to be declared in a *registered* package. A package that takes `@deepseek-ai/dsh-typert-protocol` from `node_modules` therefore can never be analyzed in place.
 
-So regenerate them where the generator can run, and commit the result:
+`pnpm run regen-typert` bridges that gap by itself: it copies this repository's `src/` into the checkout under the upstream experimental name, registers the scaffold in the Host aggregate for the length of one run, runs the generator, and restores the checkout byte-for-byte afterwards. Only `packages/typert/generator` must be built in the checkout (`pnpm run build`); the script refuses to emit an artifact that does not name every Remote method this package declares, so a stale copy cannot pass silently:
 
 ```sh
 DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 ```
 
-The checkout must be built first (`pnpm run build`). Rerun whenever a `@Remote` method's name, signature, or return type changes, or when the Remote error table changes. `scripts/typert-identity.mjs` states the identity rewrite the artifacts need, and `tests/build-artifacts.spec.ts` fails the suite if a regenerated artifact still names the upstream package — the Typert loader rejects such a contribution at boot.
+The checkout's `packages/typert/generator` must be built first. Rerun whenever a `@Remote` method's name, signature, or return type changes, or when the Remote error table changes. `scripts/typert-identity.mjs` states the identity rewrite the artifacts need, and `tests/build-artifacts.spec.ts` fails the suite if a regenerated artifact still names the upstream package — the Typert loader rejects such a contribution at boot.
 
 ### The publint warning about `./client`
 

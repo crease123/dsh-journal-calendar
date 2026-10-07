@@ -75,6 +75,10 @@ dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calend
 
 同一个 `id` 记两次返回已存在的那条，而不会追加第二条，所以工具调用重试是安全的。
 
+### 改写那句职责提示词
+
+那句话归你写。日历卡片月份标题旁有一个 ✎ 按钮：点开是内联编辑器，预填当前生效的文本，带保存、恢复默认、取消三个操作。文本落在 `$DSH_HOME/journal/duty.md`（与每日记录同目录，跟随 `dir`），**下一条消息**就生效——提示词组装时每次重读这个文件，无需重载。清空后保存即删除文件、恢复内置句子。上限 2000 字符；文本原样插入，其中的 `{{` 是你自己的文字，不会被当成变量引用。
+
 ## 开发
 
 ```sh
@@ -91,15 +95,15 @@ pnpm pack           # 先构建，再打出可分发的 tarball
 
 `generated/` 存放 Typert 产物（`typert.host.*`、`typert.remote-client.*`），Host 半边导出它们，浏览器 bundle 内联它们。它们是**生成物，不是在这里构建的**：
 
-`@deepseek-ai/dsh-typert-generator` 只在 `<root>/packages` 下发现贡献包，并且通过"该符号必须声明在一个**已注册**包里"来识别 `TypertRemoteService`。因此，从 `node_modules` 取 `@deepseek-ai/dsh-typert-protocol` 的包，永远分析不了。
+`@deepseek-ai/dsh-typert-generator` 只在 `<root>/packages` 下发现贡献包，并且通过"该符号必须声明在一个**已注册**包里"来识别 `TypertRemoteService`。因此，从 `node_modules` 取 `@deepseek-ai/dsh-typert-protocol` 的包，没法就地分析。
 
-所以要在生成器能跑的地方生成，然后把结果提交回来：
+`pnpm run regen-typert` 自己补上这道缝：它把本仓库的 `src/` 按上游实验包名复制进 checkout，在 Host 聚合里注册这个脚手架跑一次生成器，结束后把 checkout 逐字节还原。checkout 里只有 `packages/typert/generator` 需要先构建（`pnpm run build`）；脚本会拒绝导出缺了任一 Remote 方法名的产物，所以过期副本不会静默通过：
 
 ```sh
 DSH_CHECKOUT=/path/to/deepseek-harness pnpm run regen-typert
 ```
 
-那份 checkout 必须先构建过（`pnpm run build`）。凡是 `@Remote` 方法的名称、签名、返回类型变了，或者 Remote 错误码表变了，就重跑一次。`scripts/typert-identity.mjs` 写明产物需要的身份重写，而 `tests/build-artifacts.spec.ts` 会在重新生成后仍带着上游包名时让测试套件失败——Typert loader 会在启动时拒绝这种贡献。
+checkout 里的 `packages/typert/generator` 必须先构建过。凡是 `@Remote` 方法的名称、签名、返回类型变了，或者 Remote 错误码表变了，就重跑一次。`scripts/typert-identity.mjs` 写明产物需要的身份重写，而 `tests/build-artifacts.spec.ts` 会在重新生成后仍带着上游包名时让测试套件失败——Typert loader 会在启动时拒绝这种贡献。
 
 ### publint 关于 `./client` 的那条警告
 
