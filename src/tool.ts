@@ -1,6 +1,7 @@
 /**
- * `journal_record`: appends one entry to the daily journal, plus the one
- * prompt fact its tool definition cannot carry — how to correct an entry, at
+ * `journal_record`: appends one entry to the daily journal, plus the two
+ * prompt facts its tool definition cannot carry — the standing duty sentence
+ * (editable through the service's duty file) and how to correct an entry, at
  * the directory the mounted service reports.
  *
  * The tool only shapes arguments and delegates to {@link Journal}; the service
@@ -29,15 +30,6 @@ function requiredService(ctx: Context): Journal {
     throw new Error('journal_record: the journal service is not mounted on this composition')
   }
   return journal
-}
-
-/**
- * The Agent's duty toward this journal, stated where the capability is mounted.
- * A tool definition can describe mechanics but cannot impose a standing duty,
- * which is why this sentence lives in a section instead.
- */
-function journalDuty(): string {
-  return 'Recording what the user has done and what the user intends to do in the journal is one of your duties.'
 }
 
 /**
@@ -148,10 +140,18 @@ export function registerJournalTool(ctx: Context, directory: string): void {
   }))
 
   // Tool guidance, not Agent identity: the text exists exactly while this
-  // capability is mounted in the assembling scope.
+  // capability is mounted in the assembling scope. The duty text is read per
+  // assembly from the service's duty file, so an edit from the calendar card
+  // reaches the next message without a reload.
   ctx.systemPrompt.section({
     name: 'journal:duty',
     order: DUTY_SECTION_ORDER,
-    text: ({ scope }) => ctx.tools.get('journal_record', scope) === undefined ? '' : journalDuty(),
+    // A custom duty is free text: any `{{` in it is the user's own writing,
+    // not a variable reference, so it must reach the model verbatim instead
+    // of failing the assembly's strict interpolation.
+    interpolate: false,
+    text: ({ scope }) => ctx.tools.get('journal_record', scope) === undefined
+      ? ''
+      : requiredService(ctx).dutyNow().text,
   })
 }

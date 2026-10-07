@@ -3,20 +3,24 @@
  * as the `journal` Remote namespace.
  *
  * The service owns the whole storage contract: directory resolution, the
- * `YYYY-MM-DD` file name, idempotent appends, and atomic replacement. Callers —
- * the `journal_record` tool and the calendar card — never build a path, so a
+ * `YYYY-MM-DD` file name, idempotent appends, atomic replacement, and the
+ * duty file backing the editable prompt section. Callers — the
+ * `journal_record` tool and the calendar card — never build a path, so a
  * model-supplied string can never reach the filesystem as one.
  *
  * Reads fail loud: a day file that is not valid JSON, carries an unknown
  * version, or has a malformed entry rejects instead of being rebuilt, because
- * silently rewriting it would destroy the user's record.
+ * silently rewriting it would destroy the user's record. The duty file is the
+ * one exception: it is advisory prompt text, so a missing or unreadable file
+ * falls back to the built-in sentence instead of failing the assembly.
  *
  * @module dsh-journal-calendar
  */
 
 
 import { randomUUID } from 'node:crypto'
-import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
+import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
@@ -25,6 +29,7 @@ import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typer
 import type {
   Config,
   JournalDay,
+  JournalDuty,
   JournalEntry,
   JournalEntryInput,
   JournalEntryKind,
@@ -46,6 +51,18 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MONTH_PATTERN = /^\d{4}-\d{2}$/
 /** File names this service owns. */
 const DAY_FILE_PATTERN = /^(\d{4}-\d{2}-\d{2})\.json$/
+
+/**
+ * The duty sentence mounted when no custom duty file is set. Named here so
+ * the service fallback and every test name the same string.
+ */
+export const DEFAULT_DUTY
+  = 'Recording what the user has done and what the user intends to do in the journal is one of your duties.'
+
+/** The single file backing the editable duty prompt. */
+const DUTY_FILE = 'duty.md'
+/** Upper bound on the duty text, so the section cannot silently bloat the prompt. */
+export const DUTY_LIMIT = 2000
 
 /** Local date, not UTC: the calendar flips pages in the user's timezone. */
 function localDate(now = new Date()): string {
@@ -197,6 +214,34 @@ export class Journal extends TypertRemoteService {
   }
 
   /**
+   * The effective duty prompt, read on every prompt assembly so an edit lands
+   * on the next message without a reload.
+   * @returns the custom text when a duty file carries non-whitespace content, the built-in sentence otherwise.
+   */
+  dutyNow(): JournalDuty {
+    const custom = this.dutyText()
+    return custom === undefined
+      ? { text: DEFAULT_DUTY, customized: false }
+      : { text: custom, customized: true }
+  }
+
+  /**
+   * The custom duty text, when one is in effect.
+   * @returns the file's text, or `undefined` when it is missing, unreadable, or blank.
+   */
+  private dutyText(): string | undefined {
+    let raw: string
+    try {
+      raw = readFileSync(this.dutyPath(), 'utf8')
+    } catch {
+      // ENOENT or any read failure: no custom duty is in effect, and prompt
+      // assembly must not fail over advisory text.
+      return undefined
+    }
+    return raw.trim() === '' ? undefined : raw
+  }
+
+  /**
    * Read one day.
    *
    * Remote parameters cannot carry default values, so `date` is required here;
@@ -286,6 +331,39 @@ export class Journal extends TypertRemoteService {
     })
   }
 
+  /**
+   * Read the effective duty prompt for the editor's prefill.
+   * @returns the text the next prompt assembly carries and whether a file backs it.
+   */
+  @Remote('duty')
+  async readDuty(): Promise<JournalDuty> {
+    return this.dutyNow()
+  }
+
+  /**
+   * Replace the duty prompt.
+   *
+   * Empty or whitespace-only text removes the file and restores the built-in
+   * sentence, so clearing the editor and saving is the reset.
+   * @param text - the new duty text.
+   * @returns the effective duty after the write.
+   */
+  @Remote('setDuty')
+  async setDuty(text: string): Promise<JournalDuty> {
+    if (text.length > DUTY_LIMIT) {
+      throw new RemoteError('journal/invalid-duty', `duty text is ${text.length} characters; the limit is ${DUTY_LIMIT}`, {
+        length: text.length,
+        limit: DUTY_LIMIT,
+      })
+    }
+    if (text.trim() === '') {
+      await rm(this.dutyPath(), { force: true })
+    } else {
+      await this.writeDuty(text)
+    }
+    return this.dutyNow()
+  }
+
   /** Reject any date that is not `YYYY-MM-DD`, so no other string reaches `join()`. */
   private assertDate(date: string): string {
     if (!DATE_PATTERN.test(date)) {
@@ -299,6 +377,11 @@ export class Journal extends TypertRemoteService {
     return join(this.directory, `${date}.json`)
   }
 
+  /** The one file the duty prompt lives in. */
+  private dutyPath(): string {
+    return join(this.directory, DUTY_FILE)
+  }
+
   /** Replace a day file atomically so a reader never observes half a JSON document. */
   private async writeDay(date: string, day: JournalDay): Promise<void> {
     await mkdir(this.directory, { recursive: true })
@@ -306,6 +389,14 @@ export class Journal extends TypertRemoteService {
     const temporary = `${path}.tmp-${randomUUID()}`
     await writeFile(temporary, `${JSON.stringify(day, null, 2)}\n`, 'utf8')
     await rename(temporary, path)
+  }
+
+  /** Replace the duty file atomically, mirroring the day-file write. */
+  private async writeDuty(text: string): Promise<void> {
+    await mkdir(this.directory, { recursive: true })
+    const temporary = `${this.dutyPath()}.tmp-${randomUUID()}`
+    await writeFile(temporary, text, 'utf8')
+    await rename(temporary, this.dutyPath())
   }
 
   /** Run tasks for one key in order; a failure does not block the next task. */

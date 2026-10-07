@@ -71,6 +71,14 @@ export interface JournalMonthDay {
   readonly todosPending: number
 }
 
+/** Effective state of the duty prompt: what the model reads, and whether a file backs it. */
+export interface JournalDuty {
+  /** The duty text the next prompt assembly carries. */
+  readonly text: string
+  /** Whether a custom duty file is in effect; `false` means the built-in sentence. */
+  readonly customized: boolean
+}
+
 /** Host plugin configuration. */
 export interface Config {
   /** Directory holding one JSON file per day; defaults to `$DSH_HOME/journal`. */
@@ -95,5 +103,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'journal/entry-not-found': { readonly id: string; readonly date: string }
     /** The identity names a memory, which has no completion flag. */
     'journal/not-a-todo': { readonly id: string; readonly kind: string }
+    /** `setDuty()` received more characters than the duty prompt may carry. */
+    'journal/invalid-duty': { readonly length: number; readonly limit: number }
   }
 }

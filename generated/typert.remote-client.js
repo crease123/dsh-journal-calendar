@@ -18,6 +18,11 @@ const _deepseek_ai_dsh_experimental_journal_journal_day_result$schema = () => (_
   'sessionId': z.string().readonly().optional(),
 })).readonly(),
 }))
+let _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_duty_result$schema$value ??= z.object({
+  'text': z.string().readonly(),
+  'customized': z.boolean().readonly(),
+}))
 let _deepseek_ai_dsh_experimental_journal_journal_month_parameter_0$schema$value
 const _deepseek_ai_dsh_experimental_journal_journal_month_parameter_0$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_month_parameter_0$schema$value ??= z.string())
 let _deepseek_ai_dsh_experimental_journal_journal_month_result$schema$value
@@ -44,6 +49,13 @@ const _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema = () =
   'tags': z.array(z.string()).readonly().optional(),
   'done': z.boolean().readonly().optional(),
   'sessionId': z.string().readonly().optional(),
+}))
+let _deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema$value ??= z.string())
+let _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema$value ??= z.object({
+  'text': z.string().readonly(),
+  'customized': z.boolean().readonly(),
 }))
 
 export const TYPERT_REMOTE = {
@@ -73,7 +85,23 @@ export const TYPERT_REMOTE = {
         typeSymbol: 'dsh-journal-calendar/types#JournalDay',
         create: _deepseek_ai_dsh_experimental_journal_journal_day_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/index.ts","line":194,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":253,"column":9},
+    },
+    {
+      id: 'dsh-journal-calendar#journal/duty',
+      service: 'journal',
+      namespace: 'journal',
+      method: 'duty',
+      implementation: 'readDuty',
+      invocation: { kind: 'direct' },
+      parameters: [
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: 'dsh-journal-calendar/types#JournalDuty',
+        create: _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema,
+      },
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":339,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/month',
@@ -99,7 +127,7 @@ export const TYPERT_REMOTE = {
         typeSymbol: 'dsh-journal-calendar#journal/month:result',
         create: _deepseek_ai_dsh_experimental_journal_journal_month_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/index.ts","line":215,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":274,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/setDone',
@@ -144,7 +172,32 @@ export const TYPERT_REMOTE = {
         typeSymbol: 'dsh-journal-calendar/types#JournalEntry',
         create: _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/index.ts","line":251,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":310,"column":9},
+    },
+    {
+      id: 'dsh-journal-calendar#journal/setDuty',
+      service: 'journal',
+      namespace: 'journal',
+      method: 'setDuty',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'text',
+          wire: 'text',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: 'dsh-journal-calendar#journal/setDuty:text',
+            create: _deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema,
+          },
+        },
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: 'dsh-journal-calendar/types#JournalDuty',
+        create: _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema,
+      },
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":352,"column":9},
     },
   ],
 }

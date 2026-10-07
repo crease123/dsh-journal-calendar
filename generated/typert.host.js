@@ -18,6 +18,11 @@ const _deepseek_ai_dsh_experimental_journal_journal_day_result$schema = () => (_
   'sessionId': z.string().readonly().optional(),
 })).readonly(),
 }))
+let _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_duty_result$schema$value ??= z.object({
+  'text': z.string().readonly(),
+  'customized': z.boolean().readonly(),
+}))
 let _deepseek_ai_dsh_experimental_journal_journal_month_parameter_0$schema$value
 const _deepseek_ai_dsh_experimental_journal_journal_month_parameter_0$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_month_parameter_0$schema$value ??= z.string())
 let _deepseek_ai_dsh_experimental_journal_journal_month_result$schema$value
@@ -44,6 +49,13 @@ const _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema = () =
   'tags': z.array(z.string()).readonly().optional(),
   'done': z.boolean().readonly().optional(),
   'sessionId': z.string().readonly().optional(),
+}))
+let _deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema$value ??= z.string())
+let _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema$value ??= z.object({
+  'text': z.string().readonly(),
+  'customized': z.boolean().readonly(),
 }))
 
 export const TYPERT = {
@@ -76,7 +88,23 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar/types#JournalDay',
         create: _deepseek_ai_dsh_experimental_journal_journal_day_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/index.ts","line":194,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":253,"column":9},
+    },
+    {
+      id: 'dsh-journal-calendar#journal/duty',
+      service: 'journal',
+      namespace: 'journal',
+      method: 'duty',
+      implementation: 'readDuty',
+      invocation: { kind: 'direct' },
+      parameters: [
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: 'dsh-journal-calendar/types#JournalDuty',
+        create: _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema,
+      },
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":339,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/month',
@@ -102,7 +130,7 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar#journal/month:result',
         create: _deepseek_ai_dsh_experimental_journal_journal_month_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/index.ts","line":215,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":274,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/setDone',
@@ -147,7 +175,32 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar/types#JournalEntry',
         create: _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/index.ts","line":251,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":310,"column":9},
+    },
+    {
+      id: 'dsh-journal-calendar#journal/setDuty',
+      service: 'journal',
+      namespace: 'journal',
+      method: 'setDuty',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'text',
+          wire: 'text',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: 'dsh-journal-calendar#journal/setDuty:text',
+            create: _deepseek_ai_dsh_experimental_journal_journal_setDuty_parameter_0$schema,
+          },
+        },
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: 'dsh-journal-calendar/types#JournalDuty',
+        create: _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema,
+      },
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":352,"column":9},
     },
   ],
   model: {
@@ -183,6 +236,13 @@ export const TYPERT = {
           },
           {
             "kind": "method",
+            "name": "dutyNow",
+            "signature": "dutyNow(): JournalDuty",
+            "summary": "The effective duty prompt, read on every prompt assembly so an edit lands on the next message without a reload.",
+            "jsDoc": "/**\n * The effective duty prompt, read on every prompt assembly so an edit lands\n * on the next message without a reload.\n * @returns the custom text when a duty file carries non-whitespace content, the built-in sentence otherwise.\n */"
+          },
+          {
+            "kind": "method",
             "name": "readDay",
             "signature": "@Remote('day') async readDay(date: string): Promise<JournalDay>",
             "summary": "Read one day.",
@@ -201,12 +261,30 @@ export const TYPERT = {
             "signature": "@Remote('setDone') async setDone(id: string, done: boolean, date: string): Promise<JournalEntry>",
             "summary": "Set a todo's completion flag.",
             "jsDoc": "/**\n * Set a todo's completion flag.\n * @param id - entry identity.\n * @param done - target state.\n * @param date - day holding the entry.\n * @returns the updated entry.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "readDuty",
+            "signature": "@Remote('duty') async readDuty(): Promise<JournalDuty>",
+            "summary": "Read the effective duty prompt for the editor's prefill.",
+            "jsDoc": "/**\n * Read the effective duty prompt for the editor's prefill.\n * @returns the text the next prompt assembly carries and whether a file backs it.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "setDuty",
+            "signature": "@Remote('setDuty') async setDuty(text: string): Promise<JournalDuty>",
+            "summary": "Replace the duty prompt.",
+            "jsDoc": "/**\n * Replace the duty prompt.\n *\n * Empty or whitespace-only text removes the file and restores the built-in\n * sentence, so clearing the editor and saving is the reset.\n * @param text - the new duty text.\n * @returns the effective duty after the write.\n */"
           }
         ],
         "types": [
           {
             "name": "JournalDay",
             "declaration": "export interface JournalDay {\n    readonly version: 1;\n    readonly date: string;\n    readonly entries: readonly JournalEntry[];\n}"
+          },
+          {
+            "name": "JournalDuty",
+            "declaration": "export interface JournalDuty {\n    readonly text: string;\n    readonly customized: boolean;\n}"
           },
           {
             "name": "JournalEntry",

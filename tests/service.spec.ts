@@ -13,7 +13,7 @@ import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteErrorOf } from '@deepseek-ai/dsh-typert-protocol'
 import { afterEach, describe, expect, it } from 'vitest'
-import { Journal, resolveJournalDirectory } from '../src/service.ts'
+import { Journal, DEFAULT_DUTY, DUTY_LIMIT, resolveJournalDirectory } from '../src/service.ts'
 
 const directories: string[] = []
 const contexts: Context[] = []
@@ -207,5 +207,50 @@ describe('setDone()', () => {
 
     await expect(codeOf(journal.setDone('missing', true, '2026-03-04'))).resolves.toBe('journal/entry-not-found')
     await expect(codeOf(journal.setDone('memory-1', true, '2026-03-04'))).resolves.toBe('journal/not-a-todo')
+  })
+})
+
+describe('duty', () => {
+  it('serves the built-in sentence when no duty file exists', async () => {
+    const { journal } = await mounted()
+
+    await expect(journal.readDuty()).resolves.toEqual({ text: DEFAULT_DUTY, customized: false })
+    expect(journal.dutyNow()).toEqual({ text: DEFAULT_DUTY, customized: false })
+  })
+
+  it('persists a custom duty and serves it to the next assembly read', async () => {
+    const { journal, dir } = await mounted()
+    await journal.setDuty('记录我的写作进度。')
+
+    expect(journal.dutyNow()).toEqual({ text: '记录我的写作进度。', customized: true })
+    await expect(journal.readDuty()).resolves.toEqual({ text: '记录我的写作进度。', customized: true })
+    await expect(readFile(join(dir, 'duty.md'), 'utf8')).resolves.toBe('记录我的写作进度。')
+  })
+
+  it('treats blank text as the reset: the file is removed and the built-in sentence returns', async () => {
+    const { journal, dir } = await mounted()
+    await journal.setDuty('custom')
+    await journal.setDuty('   ')
+
+    expect(journal.dutyNow()).toEqual({ text: DEFAULT_DUTY, customized: false })
+    await expect(readdir(dir)).resolves.not.toContain('duty.md')
+  })
+
+  it('rejects a duty longer than the limit, keeping the previous one in effect', async () => {
+    const { journal } = await mounted()
+    await journal.setDuty('keep')
+
+    await expect(codeOf(journal.setDuty('x'.repeat(DUTY_LIMIT + 1)))).resolves.toBe('journal/invalid-duty')
+    expect(journal.dutyNow().text).toBe('keep')
+  })
+
+  it('leaves the month listing untouched by the duty file', async () => {
+    const { journal } = await mounted()
+    await journal.setDuty('custom duty')
+    await journal.record({ title: 'a day', date: '2026-03-04' })
+
+    await expect(journal.listMonth('2026-03')).resolves.toEqual([
+      { date: '2026-03-04', total: 1, memories: 1, todos: 0, todosPending: 0 },
+    ])
   })
 })
