@@ -19,15 +19,23 @@ The card shows a month grid with a marker per day, and below it the selected day
 ## Install
 
 ```sh
-dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.1.0/dsh-journal-calendar-0.1.0.tgz
+dsh plugin --profile web add dsh-journal-calendar
 ```
 
 Then reload the page. The **日历 / Journal** tab appears in the right sidebar.
 
-That URL serves a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. To remove it again:
+That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.2.0`. To remove it again:
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
+```
+
+### Installing the release tarball instead
+
+Every release attaches that same prebuilt tarball to its GitHub release, which covers a registry that has not mirrored the release yet:
+
+```sh
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.2.0/dsh-journal-calendar-0.2.0.tgz
 ```
 
 ### Installing from the repository instead
@@ -40,7 +48,7 @@ dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calend
 
 That fetches **source**, so it builds on your machine. The first attempt stops, because pnpm refuses to run a git-hosted package's build script until you allow that exact package. `dsh` prints the key to paste under `allowBuilds` in the profile's `pnpm-workspace.yaml`; add it and re-run. Treat that authorization as permission for this package's code to run on your machine at install time, and pin a commit (`…#<sha>`) if you want the installed code to stay fixed.
 
-Both paths are verified end to end: the release tarball installs with no authorization step at all, and the `git+https://` install works through its authorization step. Each boots with no warnings and reads and writes real day files.
+Every path ends at the same prebuilt artifact: the release tarball is byte-identical to the package the registry serves (one sha1 covers both), and both install with no authorization step at all; the `git+https://` install builds on your machine through its authorization step. Each boots with no warnings and reads and writes real day files.
 
 ## Where your entries live
 
@@ -134,13 +142,15 @@ npm publish
 
 `prepack` builds before the tarball is written, so `npm publish` ships compiled output and installs need no build step. `publishConfig` pins both the public access level and the official registry, because a machine configured against a mirror would otherwise publish somewhere no one else can install from. Check what would ship with `npm publish --dry-run`.
 
+npm requires two-factor authentication for publishing. An account without 2FA — or a token without **Bypass 2FA** — cannot publish directly: the upload lands in the staging area instead (`npm stage publish`), and the version goes live only through `npm stage approve <stage-id>`, which proves presence in the browser. Enabling 2FA on the account is what makes that approval complete; without it, the approval cannot prove anything and the registry rejects it.
+
 To list it in the [dsh-market](https://github.com/dsh-market/dsh-market) plugin market, open a PR that adds **one file** — `data/plugins/crease123__dsh-journal-calendar.yml` — to the [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) registry:
 
 ```yaml
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
-tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.1.0/dsh-journal-calendar-0.1.0.tgz
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.2.0/dsh-journal-calendar-0.2.0.tgz
 description:
   en: 'A daily journal the agent keeps for you. The journal_record tool appends entries to one JSON file per day under the DSH home, carrying the agent''s own record of what you did and what you intend to do; the right sidebar draws those files as a month calendar whose cells are marked by open todos, finished todos, or memories, with checkable todos and the selected day''s notes below. Entries are plain files you own and can edit.'
   zh: '助手替你维护的每日日志。journal_record 工具把条目追加到 DSH home 下一天一个的 JSON 文件里，记的是助手所见的「你做了什么、打算做什么」；右侧栏把这些文件画成月历，单元格按「有待办未完成 / 待办已完成 / 只有记事」三种状态标记，下方是可勾选的待办与所选日期的记事。条目是纯文件，归你所有，可直接编辑。'
