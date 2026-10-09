@@ -3,6 +3,7 @@
    ui-theme semantic aliases; neutral rules are 0.5px hairlines. */
 
 .root {
+  position: relative; /* the floating editor positions against the pane */
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -48,75 +49,82 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
-/* The duty editor: one bordered panel between the header and the grid. */
-.duty {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
+/* The duty editor floats over a blurred calendar. The scrim starts below the
+   header on purpose: the header button stays crisp and clickable, because it
+   is the editor's only chrome (open, save, discard). */
+.scrim {
+  position: absolute;
+  z-index: 10;
+  top: 34px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(12, 13, 15, 0.32);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+}
+
+.popover {
+  position: absolute;
+  z-index: 20;
+  top: 42px;
+  right: 10px;
+  left: 10px;
+  padding: 10px;
   border: 0.5px solid var(--dsw-alias-border-l2);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--dsw-alias-bg-layer-2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-.dutyTitle {
-  font-weight: 500;
+/* The tail: a rotated square keeping only its top-left edges, so the floating
+   card reads as coming out of the button above it. */
+.popover::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  border-left: 0.5px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-2);
+  transform: rotate(45deg);
 }
 
-.dutyCaption {
+/* The card is the boundary, so the field carries no box of its own. */
+.dutyText {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  max-height: 170px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  resize: none;
+  field-sizing: content;
+  outline: none;
+}
+
+.dutyText::placeholder {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.dutyHint {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 0.5px solid var(--dsw-alias-border-l3);
   color: var(--dsw-alias-label-tertiary);
   font-size: var(--dsh-content-font-size-caption, 11px);
 }
 
-.dutyText {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 6px 8px;
-  border: 0.5px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  background: var(--dsw-alias-bg-layer-3);
-  color: inherit;
-  font: inherit;
-  resize: vertical;
-}
-
-.dutyText:focus-visible {
-  outline: 1px solid var(--dsw-alias-brand-primary);
-}
-
-.dutyButtons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.dutyButton,
-.dutyPrimary {
-  appearance: none;
-  padding: 2px 10px;
-  border: 0.5px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--dsw-alias-label-secondary);
-  font: inherit;
-  cursor: pointer;
-}
-
-.dutyButton:hover,
-.dutyPrimary:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-}
-
-.dutyPrimary {
-  border-color: var(--dsw-alias-brand-primary);
+/* The header button turns into the commit action once the draft changed. */
+.editReady {
   color: var(--dsw-alias-brand-primary);
-}
-
-.dutyButton:disabled,
-.dutyPrimary:disabled {
-  cursor: default;
-  opacity: 0.6;
+  font-weight: 600;
 }
 
 .weekdays,

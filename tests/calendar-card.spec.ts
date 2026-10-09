@@ -15,8 +15,8 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
-import { CalendarCard, DutyPanel, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
-import type { CalendarCardProps, CalendarLabels, DutyPanelProps } from '../src/client/CalendarCard.tsx'
+import { CalendarCard, DutyPopover, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
+import type { CalendarCardProps, CalendarLabels, DutyPopoverProps } from '../src/client/CalendarCard.tsx'
 import type { JournalDuty, JournalMonthDay } from '../src/types.ts'
 
 /** One month row carrying only what the marker rule reads. */
@@ -40,11 +40,9 @@ function labelsOf(dictionary: Record<string, string>): CalendarLabels {
     monthHeading: dictionary['monthHeading'] ?? '',
     toggleTodo: dictionary['toggleTodo'] ?? '',
     editDuty: dictionary['editDuty'] ?? '',
-    dutyTitle: dictionary['dutyTitle'] ?? '',
-    dutyCaption: dictionary['dutyCaption'] ?? '',
     dutySave: dictionary['dutySave'] ?? '',
-    dutyCancel: dictionary['dutyCancel'] ?? '',
-    dutyReset: dictionary['dutyReset'] ?? '',
+    dutyHint: dictionary['dutyHint'] ?? '',
+    dutyEmptyHint: dictionary['dutyEmptyHint'] ?? '',
   }
 }
 
@@ -138,38 +136,73 @@ describe('CalendarCard render', () => {
 
     expect(html).toContain(`aria-label="${labelsOf(en).editDuty}"`)
     expect(html).not.toContain('<textarea')
-    expect(html).not.toContain(labelsOf(en).dutyTitle)
+    expect(html).not.toContain(labelsOf(en).dutyHint)
   })
 })
 
-describe('DutyPanel render', () => {
-  /** The duty data face, doubled with a resolved promise; SSR runs no effects, so the textarea starts blank. */
-  function render(labels: CalendarLabels): string {
-    const props = {
-      labels,
-      loadDuty: () => Promise.resolve<JournalDuty>({ text: 'duty text', customized: true }),
-      saveDuty: () => Promise.resolve<JournalDuty>({ text: 'duty text', customized: true }),
-      onClose: () => {},
-    } as DutyPanelProps
-    return renderToStaticMarkup(createElement(DutyPanel, props))
-  }
+describe('dutyDirty', () => {
+  const stored: JournalDuty = { text: 'stored', customized: true }
 
-  it('renders the editor with its heading, caption, textarea, and three actions', () => {
-    const html = render(labelsOf(en))
-
-    expect(html).toContain(escaped(labelsOf(en).dutyTitle))
-    expect(html).toContain(escaped(labelsOf(en).dutyCaption))
-    expect(html).toContain('<textarea')
-    for (const label of [labelsOf(en).dutyCancel, labelsOf(en).dutyReset, labelsOf(en).dutySave]) {
-      expect(html).toContain(`>${label}</button>`)
-    }
+  it('reports a change only once the draft leaves the stored text', () => {
+    expect(dutyDirty('stored', stored)).toBe(false)
+    expect(dutyDirty('stored ', stored)).toBe(true)
+    expect(dutyDirty('', stored)).toBe(true)
   })
 
-  it('renders every duty label from the Chinese dictionary', () => {
-    const html = render(labelsOf(zh))
+  it('reports nothing while the duty is still loading', () => {
+    expect(dutyDirty('typed', undefined)).toBe(false)
+  })
+})
 
-    expect(html).toContain(labelsOf(zh).dutyTitle)
-    expect(html).toContain(labelsOf(zh).dutyCaption)
-    expect(html).toContain(labelsOf(zh).dutyReset)
+describe('dutyKeyIntent', () => {
+  it('discards on escape and commits on the command chord', () => {
+    expect(dutyKeyIntent('Escape', false, false)).toBe('discard')
+    expect(dutyKeyIntent('Enter', true, false)).toBe('save')
+    expect(dutyKeyIntent('Enter', false, true)).toBe('save')
+  })
+
+  it('leaves a plain enter and ordinary typing to the field', () => {
+    expect(dutyKeyIntent('Enter', false, false)).toBeUndefined()
+    expect(dutyKeyIntent('a', false, false)).toBeUndefined()
+  })
+})
+
+describe('DutyPopover render', () => {
+  function render(labels: CalendarLabels, draft: string, failure?: string): string {
+    const props = {
+      labels,
+      draft,
+      disabled: false,
+      failure,
+      onDraft: () => {},
+      onKey: () => {},
+      onDiscard: () => {},
+    } as DutyPopoverProps
+    // SSR runs no effects, so the field renders its value without mount focus.
+    return renderToStaticMarkup(createElement(DutyPopover, props))
+  }
+
+  it('renders the floating card with the draft, one line of copy, and no buttons', () => {
+    const html = render(labelsOf(en), 'duty text')
+
+    expect(html).toContain('duty text')
+    expect(html).toContain(`placeholder="${escaped(labelsOf(en).dutyEmptyHint)}"`)
+    expect(html).toContain(escaped(labelsOf(en).dutyHint))
+    // The header button outside the card is the whole chrome.
+    expect(html).not.toContain('<button')
+  })
+
+  it('renders the Chinese copy from its own dictionary', () => {
+    const html = render(labelsOf(zh), '职责')
+
+    expect(html).toContain(labelsOf(zh).dutyHint)
+    expect(html).toContain(labelsOf(zh).dutyEmptyHint)
+  })
+
+  it('shows a failed commit inside the card so the draft stays visible', () => {
+    const html = render(labelsOf(en), 'duty text', 'journal/invalid-duty')
+
+    expect(html).toContain('journal/invalid-duty')
+    expect(html).toContain('duty text')
   })
 })

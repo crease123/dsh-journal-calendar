@@ -96,11 +96,9 @@ export function apply(ctx: ClientContext): void {
         monthHeading: t('monthHeading'),
         toggleTodo: t('toggleTodo'),
         editDuty: t('editDuty'),
-        dutyTitle: t('dutyTitle'),
-        dutyCaption: t('dutyCaption'),
         dutySave: t('dutySave'),
-        dutyCancel: t('dutyCancel'),
-        dutyReset: t('dutyReset'),
+        dutyHint: t('dutyHint'),
+        dutyEmptyHint: t('dutyEmptyHint'),
       },
       loadMonth: async (month) => {
         await mounted

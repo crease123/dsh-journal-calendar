@@ -28,11 +28,9 @@ export type CalendarKey =
   | 'monthHeading'
   | 'toggleTodo'
   | 'editDuty'
-  | 'dutyTitle'
-  | 'dutyCaption'
   | 'dutySave'
-  | 'dutyCancel'
-  | 'dutyReset'
+  | 'dutyHint'
+  | 'dutyEmptyHint'
 
 /**
  * English dictionary.
@@ -52,11 +50,9 @@ export const en: Record<CalendarKey, string> = {
   monthHeading: '{month} {year}',
   toggleTodo: 'Toggle done',
   editDuty: 'Edit journal duty',
-  dutyTitle: 'Journal duty',
-  dutyCaption: 'This text is inserted into the system prompt as the assistant\'s journal duty. Clear and save to restore the built-in sentence.',
-  dutySave: 'Save',
-  dutyCancel: 'Cancel',
-  dutyReset: 'Reset',
+  dutySave: 'Save journal duty',
+  dutyHint: 'Edit system prompt',
+  dutyEmptyHint: 'Empty restores the built-in sentence.',
 }
 
 /** Chinese dictionary. */
@@ -71,9 +67,7 @@ export const zh: Record<CalendarKey, string> = {
   monthHeading: '{year} 年 {month} 月',
   toggleTodo: '切换完成状态',
   editDuty: '编辑日记职责',
-  dutyTitle: '日记职责',
-  dutyCaption: '这段文字会作为助手的日记职责插入系统提示词。清空后保存即恢复内置句子。',
-  dutySave: '保存',
-  dutyCancel: '取消',
-  dutyReset: '恢复默认',
+  dutySave: '保存日记职责',
+  dutyHint: '编辑系统提示词',
+  dutyEmptyHint: '留空即用内置句子。',
 }

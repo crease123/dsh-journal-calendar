@@ -4,7 +4,11 @@
  * Layout follows the owner's reference design: a month header with prev/next
  * and the duty-editor button, the weekday strip, a day grid whose cells carry
  * a marker, and below it the selected day's `TO DO` and `MEMORY` sections.
- * The duty editor opens inline between the header and the weekday strip.
+ *
+ * The duty editor is a floating card over a blurred calendar rather than an
+ * inline form: the header button is its whole chrome — open, save (it turns
+ * into a check once the draft differs), or discard — so the card itself holds
+ * only the field and one line of copy.
  *
  * Marker rule (from the owner's design):
  *   - todos exist and some are still open → hollow ring
@@ -16,7 +20,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import clsx from 'clsx'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { JournalDay, JournalDuty, JournalMonthDay } from '../types.ts'
@@ -37,16 +41,12 @@ export interface CalendarLabels {
   toggleTodo: string
   /** Accessible name of the header button that opens the duty editor. */
   editDuty: string
-  /** The duty editor's heading. */
-  dutyTitle: string
-  /** One-line explanation of what the edited text becomes. */
-  dutyCaption: string
-  /** Duty editor: save button. */
+  /** Accessible name of the same button once it commits the draft. */
   dutySave: string
-  /** Duty editor: cancel button. */
-  dutyCancel: string
-  /** Duty editor: reset-to-default button. */
-  dutyReset: string
+  /** The floating card's one line of copy. */
+  dutyHint: string
+  /** Placeholder shown once the draft is cleared. */
+  dutyEmptyHint: string
 }
 
 /** Data access handed to the body by the plugin's inject face. */
@@ -70,87 +70,76 @@ export type CalendarCardProps =
   & CalendarInjected
   & PropsLocale<'journal'>
 
-/** The duty editor's composed props: the data face's duty half, its copy, and the exit. */
-export interface DutyPanelProps {
+/** The duty editor's composed props: the draft, the commit path, and the discard gesture. */
+export interface DutyPopoverProps {
   labels: CalendarLabels
-  loadDuty: () => Promise<JournalDuty>
-  saveDuty: (text: string) => Promise<JournalDuty>
-  onClose: () => void
+  /** The text being edited; the owner keeps it so the header button can commit it. */
+  draft: string
+  /** A commit is in flight. */
+  disabled: boolean
+  /** The last failure, shown inside the card so the draft survives it. */
+  failure: string | undefined
+  onDraft: (text: string) => void
+  onKey: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
+  onDiscard: () => void
+}
+
+/** Whether the draft differs from the text now in effect. */
+export function dutyDirty(draft: string, duty: JournalDuty | undefined): boolean {
+  return duty !== undefined && draft !== duty.text
 }
 
 /**
- * Inline editor for the duty prompt: prefills the effective text so tweaking
- * one word is the common path, saves through the Host, and resets to the
- * built-in sentence in one click. Save and reset both close the panel; only
- * a failure keeps it open, with the error shown in place.
- *
- * @param props - the duty data face, copy, and close callback.
- * @returns the panel.
+ * What one key press inside the duty field means.
+ * @param key - the pressed key.
+ * @param meta - whether the platform command key was held.
+ * @param ctrl - whether control was held.
+ * @returns the gesture, or `undefined` when the field handles the key itself.
  */
-export function DutyPanel(props: DutyPanelProps): ReactNode {
-  const [draft, setDraft] = useState<string | undefined>(undefined)
-  const [busy, setBusy] = useState(false)
-  const [failure, setFailure] = useState<string | undefined>(undefined)
+export function dutyKeyIntent(key: string, meta: boolean, ctrl: boolean): 'save' | 'discard' | undefined {
+  if (key === 'Escape') return 'discard'
+  if (key === 'Enter' && (meta || ctrl)) return 'save'
+  return undefined
+}
 
-  // Prefill once on mount. The latest-ref indirection keeps a parent
-  // re-render from re-fetching and wiping an in-progress edit.
-  const latest = useRef(props)
-  latest.current = props
+/**
+ * The duty editor as a floating card: the calendar behind it blurs, the field
+ * carries the text now in effect, and the header button outside owns save,
+ * discard, and open. Clicking the blur is the discard gesture.
+ *
+ * @param props - the draft, its commit path, and the discard gesture.
+ * @returns the backdrop and the floating card.
+ */
+export function DutyPopover(props: DutyPopoverProps): ReactNode {
+  const field = useRef<HTMLTextAreaElement | null>(null)
+
+  // Focus on mount: the card appears only after the Host answered, so this
+  // always lands on a prefilled field with the caret where the writing ends.
   useEffect(() => {
-    let live = true
-    void latest.current.loadDuty()
-      .then(duty => { if (live) setDraft(duty.text) })
-      .catch((error: unknown) => { if (live) setFailure(String(error)) })
-    return () => { live = false }
+    const node = field.current
+    if (node === null) return
+    node.focus()
+    node.setSelectionRange(node.value.length, node.value.length)
   }, [])
 
-  const save = async (text: string): Promise<void> => {
-    setBusy(true)
-    setFailure(undefined)
-    try {
-      await props.saveDuty(text)
-      props.onClose()
-    } catch (error) {
-      setFailure(String(error))
-    } finally {
-      setBusy(false)
-    }
-  }
-
   return (
-    <div className={css.duty}>
-      <div className={css.dutyTitle}>{props.labels.dutyTitle}</div>
-      <div className={css.dutyCaption}>{props.labels.dutyCaption}</div>
-      <textarea
-        className={css.dutyText}
-        rows={4}
-        value={draft ?? ''}
-        disabled={draft === undefined || busy}
-        onChange={event => setDraft(event.target.value)}
-      />
-      {failure === undefined ? null : <div className={css.failure}>{failure}</div>}
-      <div className={css.dutyButtons}>
-        <button type="button" className={css.dutyButton} disabled={busy} onClick={props.onClose}>
-          {props.labels.dutyCancel}
-        </button>
-        <button
-          type="button"
-          className={css.dutyButton}
-          disabled={busy}
-          onClick={() => { void save('') }}
-        >
-          {props.labels.dutyReset}
-        </button>
-        <button
-          type="button"
-          className={css.dutyPrimary}
-          disabled={busy || draft === undefined}
-          onClick={() => { void save(draft ?? '') }}
-        >
-          {props.labels.dutySave}
-        </button>
+    <>
+      <div className={css.scrim} aria-hidden="true" onMouseDown={props.onDiscard} />
+      <div className={css.popover}>
+        <textarea
+          ref={field}
+          className={css.dutyText}
+          value={props.draft}
+          placeholder={props.labels.dutyEmptyHint}
+          aria-label={props.labels.editDuty}
+          disabled={props.disabled}
+          onChange={event => props.onDraft(event.target.value)}
+          onKeyDown={props.onKey}
+        />
+        {props.failure === undefined ? null : <div className={css.failure}>{props.failure}</div>}
+        <div className={css.dutyHint}>{props.labels.dutyHint}</div>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -208,7 +197,11 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
   const [day, setDay] = useState<JournalDay | undefined>(undefined)
   const [failure, setFailure] = useState<string | undefined>(undefined)
   const [writing, setWriting] = useState<readonly string[]>([])
-  const [editing, setEditing] = useState(false)
+  const [duty, setDuty] = useState<JournalDuty | undefined>(undefined)
+  const [draft, setDraft] = useState('')
+  const [editingDuty, setEditingDuty] = useState(false)
+  const [dutyFailure, setDutyFailure] = useState<string | undefined>(undefined)
+  const [savingDuty, setSavingDuty] = useState(false)
 
   // Presentation-local data: the card is the only thing that knows which month
   // it is showing, so the fetch result lives in component state.
@@ -269,6 +262,64 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
   const memories = day?.entries.filter(entry => entry.kind === 'memory') ?? []
   const label = monthHeadingOf(month, props.labels)
 
+  /** The header button commits the moment the draft stops matching what is stored. */
+  const dutyChanged = editingDuty && dutyDirty(draft, duty)
+
+  /**
+   * Open the editor on the text now in effect. The floating card appears only
+   * once the Host answered, so a failed read reports on the calendar instead
+   * of opening an editor whose Save could never land.
+   */
+  const openDuty = (): void => {
+    setEditingDuty(true)
+    setDutyFailure(undefined)
+    void props.loadDuty()
+      .then((state) => { setDuty(state); setDraft(state.text) })
+      .catch((error: unknown) => {
+        setEditingDuty(false)
+        setFailure(String(error))
+      })
+  }
+
+  const closeDuty = (): void => {
+    setEditingDuty(false)
+    setDuty(undefined)
+    setDraft('')
+    setDutyFailure(undefined)
+  }
+
+  const commitDuty = async (): Promise<void> => {
+    setSavingDuty(true)
+    setDutyFailure(undefined)
+    try {
+      await props.saveDuty(draft)
+      closeDuty()
+    } catch (error) {
+      // Keep the card open: the draft is the only copy of what the user wrote.
+      setDutyFailure(String(error))
+    } finally {
+      setSavingDuty(false)
+    }
+  }
+
+  /**
+   * The header button carries the whole editor chrome: it opens the card,
+   * commits a changed draft, and closes an unchanged one.
+   */
+  const onDutyButton = (): void => {
+    if (!editingDuty) return openDuty()
+    if (dutyChanged) void commitDuty()
+    else closeDuty()
+  }
+
+  const onDutyKey = (event: ReactKeyboardEvent<HTMLTextAreaElement>): void => {
+    const intent = dutyKeyIntent(event.key, event.metaKey, event.ctrlKey)
+    if (intent === undefined) return
+    event.preventDefault()
+    if (intent === 'save') void commitDuty()
+    else closeDuty()
+  }
+
   return (
     <div className={css.root}>
       <div className={css.header}>
@@ -277,21 +328,25 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
         <button
           type="button"
-          className={css.edit}
-          aria-label={props.labels.editDuty}
-          title={props.labels.editDuty}
-          onClick={() => setEditing(true)}
+          className={clsx(css.edit, dutyChanged && css.editReady)}
+          aria-label={dutyChanged ? props.labels.dutySave : props.labels.editDuty}
+          title={dutyChanged ? props.labels.dutySave : props.labels.editDuty}
+          disabled={savingDuty}
+          onClick={onDutyButton}
         >
-          ✎
+          {dutyChanged ? '✓' : '✎'}
         </button>
       </div>
 
-      {editing ? (
-        <DutyPanel
+      {editingDuty && duty !== undefined ? (
+        <DutyPopover
           labels={props.labels}
-          loadDuty={props.loadDuty}
-          saveDuty={props.saveDuty}
-          onClose={() => setEditing(false)}
+          draft={draft}
+          disabled={savingDuty}
+          failure={dutyFailure}
+          onDraft={setDraft}
+          onKey={onDutyKey}
+          onDiscard={closeDuty}
         />
       ) : null}
 
