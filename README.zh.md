@@ -24,7 +24,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 刷新页面，右侧栏出现 **日历** 标签页。
 
-它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.3.0`。卸载：
+它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.3.0`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar

@@ -24,7 +24,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 Then reload the page. The **日历 / Journal** tab appears in the right sidebar.
 
-That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.3.0`. To remove it again:
+That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.3.0`. A bare name resolves to the newest release pnpm's supply-chain policy already trusts: that policy holds back any version published less than 24 hours ago, so pin the exact version to install the latest one right after a release. To remove it again:
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
