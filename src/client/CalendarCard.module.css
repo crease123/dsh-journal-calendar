@@ -291,6 +291,42 @@
   margin-bottom: 4px;
 }
 
+/* A memory recorded inside a conversation reads as a link to that turn without
+   looking like a button: inherited type, no chrome, underline on hover. */
+.memoryLink {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.memoryLink:hover,
+.memoryLink:focus-visible {
+  color: var(--dsw-alias-label-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.memoryLink:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Applied for a moment to the conversation turn an entry points at, so the
+   jump is visible instead of a silent scroll. */
+.revealed {
+  animation: reveal 1.6s ease-out;
+}
+
+@keyframes reveal {
+  0% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
 .chips {
   display: flex;
   gap: 4px;

@@ -134,6 +134,8 @@ function parseDay(raw: string, path: string): JournalDay {
       ...Array.isArray(item['tags']) ? { tags: item['tags'] as string[] } : {},
       ...typeof item['done'] === 'boolean' ? { done: item['done'] } : {},
       ...typeof item['sessionId'] === 'string' ? { sessionId: item['sessionId'] } : {},
+      ...typeof item['turn'] === 'number' ? { turn: item['turn'] } : {},
+      ...typeof item['step'] === 'number' ? { step: item['step'] } : {},
     }
   })
   return { version: 1, date, entries }
@@ -161,6 +163,13 @@ export class Journal extends TypertRemoteService {
   readonly directory: string
   /** Per-date serial chain: read-modify-write must not interleave within one day. */
   private readonly queues = new Map<string, Promise<unknown>>()
+  /**
+   * Newest turn and step each live Session reached. An entry cites the
+   * position it was recorded at so the card can jump back to that
+   * conversation turn; the service owns it because a tool execution itself
+   * carries no turn, while every Session event does.
+   */
+  private readonly positions = new Map<string, { readonly turn: number; readonly step: number }>()
 
   /**
    * @param ctx - owning Context.
@@ -169,6 +178,17 @@ export class Journal extends TypertRemoteService {
   constructor(ctx: Context, config: Config = {}) {
     super(ctx, 'journal')
     this.directory = resolveJournalDirectory(config)
+    this.ctx.on('session/event', (session, event) => {
+      if (event.type === 'turn/start') {
+        this.positions.set(session.id, { turn: event.data.turn, step: 0 })
+        return
+      }
+      // A tool call always runs inside a step, so this is the position the
+      // journal_record execution can cite.
+      if (event.type === 'step/start') {
+        this.positions.set(session.id, { turn: event.data.turn, step: event.data.step })
+      }
+    })
   }
 
   /**
@@ -188,6 +208,10 @@ export class Journal extends TypertRemoteService {
         reason: `kind=${kind}`,
       })
     }
+    // Explicit fields win, so a caller replaying an entry keeps its citation.
+    const position = input.turn === undefined
+      ? input.sessionId === undefined ? undefined : this.positions.get(input.sessionId)
+      : { turn: input.turn, step: input.step ?? 0 }
     const entry: JournalEntry = {
       id: input.id ?? randomUUID(),
       kind,
@@ -198,6 +222,9 @@ export class Journal extends TypertRemoteService {
       // A todo always carries its flag; the card's checkbox reads exactly this.
       ...kind === 'todo' ? { done: false } : {},
       ...input.sessionId === undefined ? {} : { sessionId: input.sessionId },
+      // Where in that Session the recording happened. A caller inside the
+      // Session supplies the Session; the position comes from its event stream.
+      ...position === undefined ? {} : { turn: position.turn, step: position.step },
     }
     return this.serialize(date, async () => {
       const day = await this.readDay(date)

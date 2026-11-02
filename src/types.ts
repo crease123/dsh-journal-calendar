@@ -28,6 +28,10 @@ export interface JournalEntry {
   readonly done?: boolean
   /** Live Session that produced the entry, when the caller had one. */
   readonly sessionId?: string
+  /** Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there. */
+  readonly turn?: number
+  /** Step within {@link turn}, when the recording happened inside one. */
+  readonly step?: number
 }
 
 /** One natural day: exactly the JSON written to `<dir>/<date>.json`. */
@@ -49,6 +53,10 @@ export interface JournalEntryInput {
   readonly tags?: readonly string[]
   /** Live Session that produced the entry. */
   readonly sessionId?: string
+  /** Turn within that Session; the service fills it from the Session's own events. */
+  readonly turn?: number
+  /** Step within that turn; the service fills it the same way. */
+  readonly step?: number
   /** `YYYY-MM-DD`; defaults to the local today. */
   readonly date?: string
   /** Local time; defaults to now. */

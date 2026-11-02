@@ -254,3 +254,59 @@ describe('duty', () => {
     ])
   })
 })
+
+describe('record() citation', () => {
+  /** Publish one Session event the way the Session service does. */
+  type Emitter = (thisArg: unknown, name: string, session: unknown, event: unknown) => void
+
+  /** One `step/start` publication for a Session this service is observing. */
+  function publish(journal: Journal, sessionId: string, event: { type: string; data: unknown }): void {
+    ;(journal.ctx.emit as Emitter)(journal.ctx, 'session/event', { id: sessionId }, event)
+  }
+
+  it('cites the turn and step the entry was recorded in', async () => {
+    const { journal } = await mounted()
+    publish(journal, 'session-1', { type: 'step/start', data: { turn: 3, step: 2 } })
+
+    const entry = await journal.record({ title: 'talked with the team', date: '2026-05-06', sessionId: 'session-1' })
+
+    expect(entry).toMatchObject({ sessionId: 'session-1', turn: 3, step: 2 })
+  })
+
+  it('keeps the citation when the day file is read back', async () => {
+    const { journal } = await mounted()
+    publish(journal, 'session-1', { type: 'step/start', data: { turn: 7, step: 1 } })
+    await journal.record({ title: 'decided', date: '2026-05-06', sessionId: 'session-1' })
+
+    const day = await journal.readDay('2026-05-06')
+
+    expect(day.entries[0]).toMatchObject({ turn: 7, step: 1 })
+  })
+
+  it('opens a turn before its first step', async () => {
+    const { journal } = await mounted()
+    publish(journal, 'session-1', { type: 'turn/start', data: { turn: 4 } })
+
+    const entry = await journal.record({ title: 'between steps', date: '2026-05-06', sessionId: 'session-1' })
+
+    expect(entry).toMatchObject({ turn: 4, step: 0 })
+  })
+
+  it('records a Session it never saw as a plain citation', async () => {
+    const { journal } = await mounted()
+
+    const entry = await journal.record({ title: 'replayed', date: '2026-05-06', sessionId: 'unknown-session' })
+
+    expect(entry).toMatchObject({ sessionId: 'unknown-session' })
+    expect(entry.turn).toBeUndefined()
+  })
+
+  it('stamps no citation at all without a Session', async () => {
+    const { journal } = await mounted()
+
+    const entry = await journal.record({ title: 'typed by hand', date: '2026-05-06' })
+
+    expect(entry.sessionId).toBeUndefined()
+    expect(entry.turn).toBeUndefined()
+  })
+})

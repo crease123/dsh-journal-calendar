@@ -15,9 +15,9 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
-import { CalendarCard, DutyPopover, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
+import { CalendarCard, DutyPopover, MemoryEntry, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
 import type { CalendarCardProps, CalendarLabels, DutyPopoverProps } from '../src/client/CalendarCard.tsx'
-import type { JournalDuty, JournalMonthDay } from '../src/types.ts'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../src/types.ts'
 
 /** One month row carrying only what the marker rule reads. */
 function row(partial: Partial<JournalMonthDay>): JournalMonthDay {
@@ -43,6 +43,7 @@ function labelsOf(dictionary: Record<string, string>): CalendarLabels {
     dutySave: dictionary['dutySave'] ?? '',
     dutyHint: dictionary['dutyHint'] ?? '',
     dutyEmptyHint: dictionary['dutyEmptyHint'] ?? '',
+    openSource: dictionary['openSource'] ?? '',
   }
 }
 
@@ -101,14 +102,16 @@ describe('CalendarCard render', () => {
   }
 
   /** The slot framework composes the remaining runtime seats; this drives only the ones the card reads. */
-  function render(labels: CalendarLabels): string {
+  function render(labels: CalendarLabels, entries: JournalEntry[] = []): string {
+    const day: JournalDay = { version: 1, date: '2026-09-30', entries }
     const props = {
       labels,
       loadMonth: () => Promise.resolve<JournalMonthDay[]>([]),
-      loadDay: () => Promise.resolve({ version: 1 as const, date: '2026-09-30', entries: [] }),
+      loadDay: () => Promise.resolve(day),
       setDone: () => Promise.resolve(),
       loadDuty: () => Promise.resolve(duty),
       saveDuty: () => Promise.resolve(duty),
+      openSource: () => undefined,
       t: (key: string) => key,
     } as CalendarCardProps
     // An element, not `CalendarCard(props)`: calling the component directly runs
@@ -129,6 +132,28 @@ describe('CalendarCard render', () => {
 
     expect(html).toContain(currentHeading(labelsOf(zh)))
     expect(html).toContain(labelsOf(zh).empty)
+  })
+
+  it('links a memory to the conversation turn that recorded it', () => {
+    const html = renderToStaticMarkup(createElement(MemoryEntry, {
+      labels: labelsOf(en),
+      entry: { id: 'a', kind: 'memory', time: '10:00', title: 'met the team', sessionId: 'session-1', turn: 3 },
+      openSource: () => undefined,
+    }))
+
+    expect(html).toContain(`aria-label="${escaped(labelsOf(en).openSource)}: met the team"`)
+    expect(html).toContain('>met the team</button>')
+  })
+
+  it('leaves a memory with no source conversation as plain text', () => {
+    const html = renderToStaticMarkup(createElement(MemoryEntry, {
+      labels: labelsOf(en),
+      entry: { id: 'b', kind: 'memory', time: '11:00', title: 'no source' },
+      openSource: () => undefined,
+    }))
+
+    expect(html).toContain('>no source</div>')
+    expect(html).not.toContain(escaped(labelsOf(en).openSource))
   })
 
   it('carries the duty editor behind its button, closed by default', () => {

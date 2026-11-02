@@ -31,6 +31,7 @@ export type CalendarKey =
   | 'dutySave'
   | 'dutyHint'
   | 'dutyEmptyHint'
+  | 'openSource'
 
 /**
  * English dictionary.
@@ -53,6 +54,7 @@ export const en: Record<CalendarKey, string> = {
   dutySave: 'Save journal duty',
   dutyHint: 'Edit system prompt',
   dutyEmptyHint: 'Empty restores the built-in sentence.',
+  openSource: 'Show the conversation that recorded this',
 }
 
 /** Chinese dictionary. */
@@ -70,4 +72,5 @@ export const zh: Record<CalendarKey, string> = {
   dutySave: '保存日记职责',
   dutyHint: '编辑系统提示词',
   dutyEmptyHint: '留空即用内置句子。',
+  openSource: '查看记录这条的对话',
 }

@@ -23,7 +23,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import clsx from 'clsx'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { JournalDay, JournalDuty, JournalMonthDay } from '../types.ts'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../types.ts'
 import css from './CalendarCard.module.css'
 
 /** Copy resolved for the active locale by the plugin's inject face. */
@@ -47,6 +47,8 @@ export interface CalendarLabels {
   dutyHint: string
   /** Placeholder shown once the draft is cleared. */
   dutyEmptyHint: string
+  /** Accessible name of a memory that links back to the conversation that recorded it. */
+  openSource: string
 }
 
 /** Data access handed to the body by the plugin's inject face. */
@@ -62,6 +64,8 @@ export interface CalendarInjected {
   loadDuty: () => Promise<JournalDuty>
   /** Replace the duty prompt; empty text restores the built-in sentence. */
   saveDuty: (text: string) => Promise<JournalDuty>
+  /** Show the conversation that recorded this entry, at the turn it was recorded in. */
+  openSource: (entry: JournalEntry) => void
 }
 
 /** The body's composed props: the tab it draws, the data face, and its copy. */
@@ -82,6 +86,39 @@ export interface DutyPopoverProps {
   onDraft: (text: string) => void
   onKey: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
   onDiscard: () => void
+}
+
+/** One memory row: its chips, time, and the title that links back to where it was recorded. */
+export function MemoryEntry({ labels, entry, openSource }: {
+  labels: CalendarLabels
+  entry: JournalEntry
+  openSource: (entry: JournalEntry) => void
+}): ReactNode {
+  return (
+    <div className={css.memory}>
+      <div className={css.memoryHead}>
+        <span className={css.chips}>
+          {(entry.tags ?? []).map(tag => <em key={tag} className={css.chip}>{tag}</em>)}
+        </span>
+        <span className={css.time}>{entry.time}</span>
+      </div>
+      {entry.sessionId === undefined
+        // No Session recorded it (hand-edited file, or a write outside a
+        // conversation): the row is text, because there is nowhere to go.
+        ? <div>{entry.title}</div>
+        : (
+          <button
+            type="button"
+            className={css.memoryLink}
+            title={labels.openSource}
+            aria-label={`${labels.openSource}: ${entry.title}`}
+            onClick={() => { openSource(entry) }}
+          >
+            {entry.title}
+          </button>
+        )}
+    </div>
+  )
 }
 
 /** Whether the draft differs from the text now in effect. */
@@ -407,15 +444,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
           <>
             <div className={css.section}>{props.labels.memory}</div>
             {memories.map(entry => (
-              <div key={entry.id} className={css.memory}>
-                <div className={css.memoryHead}>
-                  <span className={css.chips}>
-                    {(entry.tags ?? []).map(tag => <em key={tag} className={css.chip}>{tag}</em>)}
-                  </span>
-                  <span className={css.time}>{entry.time}</span>
-                </div>
-                <div>{entry.title}</div>
-              </div>
+              <MemoryEntry key={entry.id} labels={props.labels} entry={entry} openSource={props.openSource} />
             ))}
           </>
         )}

@@ -83,6 +83,10 @@ The plugin registers the `journal_record` tool and one prompt sentence telling t
 
 Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
 
+### Jumping back to the conversation
+
+An entry recorded from a conversation also stores that Session and the turn it came from, so a memory in the card is a link: clicking one switches to the conversation and scrolls to the turn the entry was recorded in, with a brief highlight. Entries written outside a conversation (hand-edited files, or anything recorded before this existed) carry no source and stay plain text. The scroll addresses turns through the Web client's `data-chat-turn` attribute; if a future client stops publishing it, the click still opens the conversation and simply does not scroll.
+
 ### Editing the duty sentence
 
 That prompt sentence is yours to rewrite. The calendar card carries a ✎ button beside the month heading: it opens an inline editor prefilled with the text now in effect, with Save, Reset, and Cancel. The text lands in `$DSH_HOME/journal/duty.md` (beside the day files, following `dir`), and the **next message** already carries it — the section is re-read on every prompt assembly, with no reload. Clearing the editor and saving removes the file and restores the built-in sentence. The limit is 2000 characters; the text is inserted verbatim, so `{{` in it is your own writing, not a variable reference.
@@ -165,6 +169,7 @@ The registry's `url` must match the repository exactly, and the repository must 
 - **The Web UI is required to see the calendar.** On a headless profile the tool still records entries; nothing draws them.
 - **Regenerating the Remote artifacts needs a DSH checkout.** Changing a `@Remote` method's signature is not a self-contained operation here.
 - **Days are grouped by the local date of the machine running DSH.** A day file does not carry a timezone, so a laptop that changes timezone mid-travel can attribute an entry to the neighbouring day.
+- **Jumping back to a conversation relies on the Web client.** The card locates the turn through the `data-chat-turn` attribute; a client that stops publishing it opens the conversation without scrolling, and entries written before the anchor existed have no source at all.
 - **`todo` here is not `todo_write`.** The calendar's todos are durable, one JSON file per day; the built-in `todo_write` tool is a per-session list. Both read as "记录一下" to a model, and no prompt currently distinguishes them.
 
 ## License

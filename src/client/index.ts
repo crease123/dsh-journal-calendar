@@ -18,6 +18,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import { CalendarCard, type CalendarInjected } from './CalendarCard.tsx'
 import { en, zh } from './locales.ts'
+import { revealTurn } from './reveal.ts'
 import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../types.ts'
 
 /** Tab type identity; also the key of the body seat. */
@@ -99,6 +100,7 @@ export function apply(ctx: ClientContext): void {
         dutySave: t('dutySave'),
         dutyHint: t('dutyHint'),
         dutyEmptyHint: t('dutyEmptyHint'),
+        openSource: t('openSource'),
       },
       loadMonth: async (month) => {
         await mounted
@@ -119,6 +121,16 @@ export function apply(ctx: ClientContext): void {
       saveDuty: async (text) => {
         await mounted
         return unwrap(await remote().setDuty(text))
+      },
+      openSource: (entry) => {
+        const sessionId = entry.sessionId
+        if (sessionId === undefined) return
+        // The Workspace service only exists in a GUI profile; without it the
+        // entry stays a plain row instead of failing the click.
+        const workspace = services.get('uiWorkspace') as { openSession: (id: string) => void } | undefined
+        if (workspace === undefined) return
+        workspace.openSession(sessionId)
+        if (entry.turn !== undefined) revealTurn(entry.turn)
       },
     }),
   }, CalendarCard)), 'journal.body')

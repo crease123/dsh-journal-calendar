@@ -12,6 +12,7 @@
     "src/client/index.ts",
     "src/client/CalendarCard.tsx",
     "src/client/locales.ts",
+    "src/client/reveal.ts",
     "src/css-modules.d.ts",
     "src/types.ts"
   ]
