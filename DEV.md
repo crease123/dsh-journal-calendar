@@ -4,9 +4,15 @@
 
 ## 当前安装形态
 
-- `~/.dsh/profiles/desktop/package.json`：`"dsh-journal-calendar": "link:/Users/lw/code/prac/dsh-journal-calendar"`
-- `~/.dsh/profiles/desktop/node_modules/dsh-journal-calendar` → 本仓库（符号链接；离线时 `pnpm install` 会因拉不到 registry 失败，此链接是手工建立的）
-- 若重新执行 `dsh plugin add dsh-journal-calendar`，会被覆盖回 npm 包，需要再次切回链接
+- `~/.dsh/profiles/desktop/package.json` 里声明的仍是 `"dsh-journal-calendar": "^0.2.0"`（与 `pnpm-lock.yaml` 一致，保证 DSH 启动时 manifest 与 lockfile 不打架）
+- `~/.dsh/profiles/desktop/node_modules/dsh-journal-calendar` **是手工建的符号链接，指向本仓库**，所以运行时加载的是这里的源码
+- 一旦有人执行 `dsh plugin add dsh-journal-calendar` 或 `pnpm install`，链接会被换回 npm 包，需要重建：
+  ```sh
+  cd ~/.dsh/profiles/desktop/node_modules
+  rm -rf dsh-journal-calendar
+  ln -s /Users/lw/code/prac/dsh-journal-calendar dsh-journal-calendar
+  ```
+- 想彻底回到 npm 版本：删掉链接后重装（`dsh plugin add dsh-journal-calendar`）
 
 **改动要真正生效，重启 DSH app**（当前 app 进程里加载的仍是旧模块）。
 
