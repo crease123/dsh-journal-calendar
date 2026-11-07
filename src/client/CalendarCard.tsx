@@ -471,7 +471,8 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
    * commits a changed draft, and closes an unchanged one.
    */
   const onDutyButton = (): void => {
-    if (!editingDuty) return openDuty()
+    // The two editors never share the card: opening one closes the other.
+    if (!editingDuty) { closeSearch(); return openDuty() }
     if (dutyChanged) void commitDuty()
     else closeDuty()
   }
