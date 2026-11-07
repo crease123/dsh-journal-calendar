@@ -60,7 +60,7 @@ export const en: Record<CalendarKey, string> = {
   dutyEmptyHint: 'Empty restores the built-in sentence.',
   openSource: 'Show the conversation that recorded this',
   search: 'Search entries',
-  searchPlaceholder: 'Search titles, details, tags',
+  searchPlaceholder: 'Search titles and tags',
   searchEmpty: 'Nothing matches.',
   searchClose: 'Close search',
 }
@@ -82,7 +82,7 @@ export const zh: Record<CalendarKey, string> = {
   dutyEmptyHint: '留空即用内置句子。',
   openSource: '查看记录这条的对话',
   search: '搜索条目',
-  searchPlaceholder: '搜索标题、详情、标签',
+  searchPlaceholder: '搜索标题与标签',
   searchEmpty: '没有匹配的条目。',
   searchClose: '关闭搜索',
 }

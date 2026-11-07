@@ -20,8 +20,6 @@ export interface JournalEntry {
   readonly time: string
   /** One-line summary shown as the entry's main line. */
   readonly title: string
-  /** Optional expanded detail. */
-  readonly detail?: string
   /** Optional short tags rendered as chips (for example `人际`). */
   readonly tags?: readonly string[]
   /** Present for `todo` only: whether it is done. */
@@ -47,8 +45,6 @@ export interface JournalEntryInput {
   readonly title: string
   /** Defaults to `memory`. */
   readonly kind?: JournalEntryKind
-  /** Optional expanded detail. */
-  readonly detail?: string
   /** Optional short tags. */
   readonly tags?: readonly string[]
   /** Live Session that produced the entry. */

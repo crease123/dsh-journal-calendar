@@ -324,13 +324,15 @@ describe('search()', () => {
     expect(hits.map(hit => hit.entry.title)).toEqual(['ship the release notes', 'ship the calendar search'])
   })
 
-  it('matches a detail and a tag, not only the title', async () => {
+  it('matches a tag as well as a title, and nothing the card does not draw', async () => {
     const { journal } = await mounted()
-    await journal.record({ title: 'talked with the team', date: '2026-03-04', detail: 'agreed on the rollout plan' })
+    await journal.record({ title: 'talked with the team', date: '2026-03-04' })
     await journal.record({ title: 'read a paper', date: '2026-03-05', tags: ['research'] })
 
-    await expect(journal.search('rollout')).resolves.toMatchObject([{ entry: { title: 'talked with the team' } }])
     await expect(journal.search('RESEARCH')).resolves.toMatchObject([{ entry: { title: 'read a paper' } }])
+    // Neither a kind name nor a time is drawn as text, so neither is searchable.
+    await expect(journal.search('memory')).resolves.toEqual([])
+    await expect(journal.search('2026-03-04')).resolves.toEqual([])
   })
 
   it('matches a todo as well as a memory, keeping both kinds', async () => {

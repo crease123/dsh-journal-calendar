@@ -12,7 +12,6 @@ const _deepseek_ai_dsh_experimental_journal_journal_day_result$schema = () => (_
   'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly(),
   'time': z.string().readonly(),
   'title': z.string().readonly(),
-  'detail': z.string().readonly().optional(),
   'tags': z.array(z.string()).readonly().optional(),
   'done': z.boolean().readonly().optional(),
   'sessionId': z.string().readonly().optional(),
@@ -45,7 +44,6 @@ const _deepseek_ai_dsh_experimental_journal_journal_search_result$schema = () =>
   'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly(),
   'time': z.string().readonly(),
   'title': z.string().readonly(),
-  'detail': z.string().readonly().optional(),
   'tags': z.array(z.string()).readonly().optional(),
   'done': z.boolean().readonly().optional(),
   'sessionId': z.string().readonly().optional(),
@@ -65,7 +63,6 @@ const _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema = () =
   'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly(),
   'time': z.string().readonly(),
   'title': z.string().readonly(),
-  'detail': z.string().readonly().optional(),
   'tags': z.array(z.string()).readonly().optional(),
   'done': z.boolean().readonly().optional(),
   'sessionId': z.string().readonly().optional(),
@@ -286,7 +283,7 @@ export const TYPERT = {
             "name": "search",
             "signature": "@Remote('search') async search(query: string): Promise<JournalSearchHit[]>",
             "summary": "Keyword search across every stored day, newest day first.",
-            "jsDoc": "/**\n * Keyword search across every stored day, newest day first.\n *\n * The query matches a title, a detail, or a tag, case-insensitively. Results\n * stop at {@link SEARCH_LIMIT} so one query cannot stream the whole journal\n * into the card; a malformed day file fails the search instead of being\n * skipped, the same way {@link readDay} refuses to repair it.\n * @param query - free text; blank returns no hits.\n * @returns matching entries with the day each one lives in.\n */"
+            "jsDoc": "/**\n * Keyword search across every stored day, newest day first.\n *\n * The query matches a title or a tag, case-insensitively — the two things the\n * card draws — so every hit is something the owner can see. Results\n * stop at {@link SEARCH_LIMIT} so one query cannot stream the whole journal\n * into the card; a malformed day file fails the search instead of being\n * skipped, the same way {@link readDay} refuses to repair it.\n * @param query - free text; blank returns no hits.\n * @returns matching entries with the day each one lives in.\n */"
           },
           {
             "kind": "method",
@@ -342,11 +339,11 @@ export const TYPERT = {
           },
           {
             "name": "JournalEntry",
-            "declaration": "export interface JournalEntry {\n    readonly id: string;\n    readonly kind: JournalEntryKind;\n    readonly time: string;\n    readonly title: string;\n    readonly detail?: string;\n    readonly tags?: readonly string[];\n    readonly done?: boolean;\n    readonly sessionId?: string;\n    readonly turn?: number;\n    readonly step?: number;\n}"
+            "declaration": "export interface JournalEntry {\n    readonly id: string;\n    readonly kind: JournalEntryKind;\n    readonly time: string;\n    readonly title: string;\n    readonly tags?: readonly string[];\n    readonly done?: boolean;\n    readonly sessionId?: string;\n    readonly turn?: number;\n    readonly step?: number;\n}"
           },
           {
             "name": "JournalEntryInput",
-            "declaration": "export interface JournalEntryInput {\n    readonly title: string;\n    readonly kind?: JournalEntryKind;\n    readonly detail?: string;\n    readonly tags?: readonly string[];\n    readonly sessionId?: string;\n    readonly turn?: number;\n    readonly step?: number;\n    readonly date?: string;\n    readonly time?: string;\n    readonly id?: string;\n}"
+            "declaration": "export interface JournalEntryInput {\n    readonly title: string;\n    readonly kind?: JournalEntryKind;\n    readonly tags?: readonly string[];\n    readonly sessionId?: string;\n    readonly turn?: number;\n    readonly step?: number;\n    readonly date?: string;\n    readonly time?: string;\n    readonly id?: string;\n}"
           },
           {
             "name": "JournalEntryKind",

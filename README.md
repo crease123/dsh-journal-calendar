@@ -79,7 +79,7 @@ The service treats a file it cannot parse as a hard error rather than rebuilding
 
 ## What the agent does with it
 
-The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, and optionally `detail`, `tags`, `date`, and `time`.
+The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, and optionally `tags`, `date`, and `time`.
 
 Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
 
@@ -89,7 +89,7 @@ An entry recorded from a conversation also stores that Session and the turn it c
 
 ### Searching the journal
 
-The 🔍 button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title, detail, and tags, case-insensitively and newest day first; each hit carries its kind and day. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
+The magnifier button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title and tags, case-insensitively and newest day first — only what the card draws, so every hit is something you can see; each hit carries its kind, day, and tags. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
 
 ### Editing the duty sentence
 

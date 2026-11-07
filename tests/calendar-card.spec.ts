@@ -15,7 +15,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
-import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, dutyDirty, dutyKeyIntent, markerOf, matchSnippet, monthHeadingOf } from '../src/client/CalendarCard.tsx'
+import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
 import type { CalendarCardProps, CalendarLabels, DutyPopoverProps, SearchPanelProps } from '../src/client/CalendarCard.tsx'
 import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../src/types.ts'
 
@@ -273,19 +273,14 @@ describe('SearchPanel render', () => {
     expect(html).toContain(`>${escaped(labelsOf(en).memory)}</span>`)
   })
 
-  it('explains a hit whose match is not in the title', () => {
-    const html = render(labelsOf(en), 'four agents', [
-      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: '三代理系统跑通', detail: 'four agents in one loop' }),
+  it('shows the tags a hit may have matched, so the row explains itself', () => {
+    const html = render(labelsOf(en), 'research', [
+      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: 'read a paper', tags: ['research', '论文'] }),
     ])
 
-    expect(html).toContain('in one loop')
-    expect(html).toContain('<mark')
-    expect(html).toContain('four agents</mark>')
-    // The title match needs no excerpt, because the title is already the row.
-    const titled = render(labelsOf(en), '三代理', [
-      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: '三代理系统跑通', detail: 'four agents in one loop' }),
-    ])
-    expect(titled).not.toContain('<mark')
+    expect(html).toContain('read a paper')
+    expect(html).toContain('research</em>')
+    expect(html).toContain('论文</em>')
   })
 
   it('says nothing matches instead of leaving the list blank', () => {
@@ -307,33 +302,5 @@ describe('SearchPanel render', () => {
     expect(html).toContain(`placeholder="${escaped(labelsOf(zh).searchPlaceholder)}"`)
     expect(html).toContain(`aria-label="${escaped(labelsOf(zh).search)}"`)
     expect(html).toContain(`aria-label="${escaped(labelsOf(zh).searchClose)}"`)
-  })
-})
-
-describe('matchSnippet', () => {
-  const entry = (partial: Partial<JournalEntry>): JournalEntry => ({ id: 'e', kind: 'memory', time: '10:00', title: 'title', ...partial })
-
-  it('reports a title match as the title itself', () => {
-    expect(matchSnippet(entry({ title: 'shipped the search' }), 'search')).toEqual({ field: 'title', excerpt: 'shipped the search' })
-  })
-
-  it('windows a detail match so a long detail does not flood the row', () => {
-    const detail = `${'x'.repeat(80)}needle${'y'.repeat(80)}`
-    const snippet = matchSnippet(entry({ detail }), 'NEEDLE')
-
-    expect(snippet?.field).toBe('detail')
-    expect(snippet?.excerpt).toContain('needle')
-    expect(snippet?.excerpt.startsWith('…')).toBe(true)
-    expect(snippet?.excerpt.endsWith('…')).toBe(true)
-    expect(snippet?.excerpt.length).toBeLessThan(detail.length)
-  })
-
-  it('reports a tag match', () => {
-    expect(matchSnippet(entry({ tags: ['research'] }), 'research')).toEqual({ field: 'tag', excerpt: 'research' })
-  })
-
-  it('answers nothing for a blank query or an entry that only matched elsewhere', () => {
-    expect(matchSnippet(entry({}), '   ')).toBeUndefined()
-    expect(matchSnippet(entry({ detail: 'some other text' }), 'search')).toBeUndefined()
   })
 })

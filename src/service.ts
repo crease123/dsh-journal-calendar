@@ -134,7 +134,6 @@ function parseDay(raw: string, path: string): JournalDay {
       kind,
       time: item['time'] as string,
       title: item['title'] as string,
-      ...typeof item['detail'] === 'string' ? { detail: item['detail'] } : {},
       ...Array.isArray(item['tags']) ? { tags: item['tags'] as string[] } : {},
       ...typeof item['done'] === 'boolean' ? { done: item['done'] } : {},
       ...typeof item['sessionId'] === 'string' ? { sessionId: item['sessionId'] } : {},
@@ -163,10 +162,11 @@ export function resolveJournalDirectory(config: Config = {}): string {
  * Whether one entry carries the search needle.
  * @param entry - stored entry.
  * @param needle - lower-cased, trimmed query.
- * @returns true when the title, detail, or a tag contains the needle.
+ * @returns true when the title or a tag contains the needle.
  */
 function matchesQuery(entry: JournalEntry, needle: string): boolean {
-  const haystack = [entry.title, entry.detail ?? '', ...entry.tags ?? []].join('\n').toLowerCase()
+  // Only what the card draws is searchable: the title and the tag chips.
+  const haystack = [entry.title, ...entry.tags ?? []].join('\n').toLowerCase()
   return haystack.includes(needle)
 }
 
@@ -232,7 +232,6 @@ export class Journal extends TypertRemoteService {
       kind,
       time: input.time ?? localTime(),
       title: input.title.trim(),
-      ...input.detail === undefined ? {} : { detail: input.detail },
       ...input.tags === undefined || input.tags.length === 0 ? {} : { tags: [...input.tags] },
       // A todo always carries its flag; the card's checkbox reads exactly this.
       ...kind === 'todo' ? { done: false } : {},
@@ -258,7 +257,8 @@ export class Journal extends TypertRemoteService {
   /**
    * Keyword search across every stored day, newest day first.
    *
-   * The query matches a title, a detail, or a tag, case-insensitively. Results
+   * The query matches a title or a tag, case-insensitively — the two things the
+   * card draws — so every hit is something the owner can see. Results
    * stop at {@link SEARCH_LIMIT} so one query cannot stream the whole journal
    * into the card; a malformed day file fails the search instead of being
    * skipped, the same way {@link readDay} refuses to repair it.

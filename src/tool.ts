@@ -78,10 +78,6 @@ export function registerJournalTool(ctx: Context, directory: string): void {
         required: true,
         description: 'One-line summary — the line shown in the day list.',
       },
-      detail: {
-        type: 'string',
-        description: 'Optional longer detail: what was decided, why, and what comes next.',
-      },
       tags: {
         type: 'array',
         items: { type: 'string' },
@@ -119,7 +115,6 @@ export function registerJournalTool(ctx: Context, directory: string): void {
       const entry = await journal.record({
         title: args.title,
         kind: args.kind,
-        ...args.detail === undefined ? {} : { detail: args.detail },
         ...args.tags === undefined ? {} : { tags: args.tags },
         ...args.date === undefined ? {} : { date: args.date },
         ...args.time === undefined ? {} : { time: args.time },

@@ -448,19 +448,8 @@
   white-space: nowrap;
 }
 
-/* A hit whose match lives outside the title says so: the excerpt is clamped to
-   two lines so one long detail cannot push the rest of the list away. */
-.searchHitExcerpt {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.searchHitMark {
-  background: transparent;
-  color: var(--dsw-alias-brand-primary);
-  font-weight: 600;
+/* The header buttons draw monochrome glyphs, so the icon inherits their color
+   and weight instead of bringing an emoji's own palette. */
+.icon {
+  display: block;
 }
