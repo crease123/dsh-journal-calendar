@@ -24,7 +24,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 刷新页面，右侧栏出现 **日历** 标签页。
 
-它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.3.0`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
+它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.4.0`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
@@ -35,7 +35,7 @@ dsh plugin --profile web remove dsh-journal-calendar
 每次发版都会把同一份预构建产物挂到 GitHub Release 上，适合你所用的源还没同步该版本的场合：
 
 ```sh
-dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.3.0/dsh-journal-calendar-0.3.0.tgz
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.4.0/dsh-journal-calendar-0.4.0.tgz
 ```
 
 ### 改为从仓库安装
@@ -158,7 +158,7 @@ npm 现在要求发布时具备双因素认证。账号没开 2FA、或 token �
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
-tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.3.0/dsh-journal-calendar-0.3.0.tgz
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.4.0/dsh-journal-calendar-0.4.0.tgz
 description:
   en: 'A daily journal the agent keeps for you. The journal_record tool appends entries to one JSON file per day under the DSH home, carrying the agent''s own record of what you did and what you intend to do; the right sidebar draws those files as a month calendar whose cells are marked by open todos, finished todos, or memories, with checkable todos and the selected day''s notes below. Entries are plain files you own and can edit.'
   zh: '助手替你维护的每日日志。journal_record 工具把条目追加到 DSH home 下一天一个的 JSON 文件里，记的是助手所见的「你做了什么、打算做什么」；右侧栏把这些文件画成月历，单元格按「有待办未完成 / 待办已完成 / 只有记事」三种状态标记，下方是可勾选的待办与所选日期的记事。条目是纯文件，归你所有，可直接编辑。'
