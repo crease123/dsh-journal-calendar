@@ -35,6 +35,24 @@ const _deepseek_ai_dsh_experimental_journal_journal_month_result$schema = () => 
   'todos': z.number().readonly(),
   'todosPending': z.number().readonly(),
 })))
+let _deepseek_ai_dsh_experimental_journal_journal_search_parameter_0$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_search_parameter_0$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_search_parameter_0$schema$value ??= z.string())
+let _deepseek_ai_dsh_experimental_journal_journal_search_result$schema$value
+const _deepseek_ai_dsh_experimental_journal_journal_search_result$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_search_result$schema$value ??= z.array(z.object({
+  'date': z.string().readonly(),
+  'entry': z.object({
+  'id': z.string().readonly(),
+  'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly(),
+  'time': z.string().readonly(),
+  'title': z.string().readonly(),
+  'detail': z.string().readonly().optional(),
+  'tags': z.array(z.string()).readonly().optional(),
+  'done': z.boolean().readonly().optional(),
+  'sessionId': z.string().readonly().optional(),
+  'turn': z.number().readonly().optional(),
+  'step': z.number().readonly().optional(),
+}).readonly(),
+})))
 let _deepseek_ai_dsh_experimental_journal_journal_setDone_parameter_0$schema$value
 const _deepseek_ai_dsh_experimental_journal_journal_setDone_parameter_0$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_setDone_parameter_0$schema$value ??= z.string())
 let _deepseek_ai_dsh_experimental_journal_journal_setDone_parameter_1$schema$value
@@ -92,7 +110,7 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar/types#JournalDay',
         create: _deepseek_ai_dsh_experimental_journal_journal_day_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":280,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":333,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/duty',
@@ -108,7 +126,7 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar/types#JournalDuty',
         create: _deepseek_ai_dsh_experimental_journal_journal_duty_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":366,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":419,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/month',
@@ -134,7 +152,32 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar#journal/month:result',
         create: _deepseek_ai_dsh_experimental_journal_journal_month_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":301,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":354,"column":9},
+    },
+    {
+      id: 'dsh-journal-calendar#journal/search',
+      service: 'journal',
+      namespace: 'journal',
+      method: 'search',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'query',
+          wire: 'query',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: 'dsh-journal-calendar#journal/search:query',
+            create: _deepseek_ai_dsh_experimental_journal_journal_search_parameter_0$schema,
+          },
+        },
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: 'dsh-journal-calendar#journal/search:result',
+        create: _deepseek_ai_dsh_experimental_journal_journal_search_result$schema,
+      },
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":269,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/setDone',
@@ -179,7 +222,7 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar/types#JournalEntry',
         create: _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":337,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":390,"column":9},
     },
     {
       id: 'dsh-journal-calendar#journal/setDuty',
@@ -204,7 +247,7 @@ export const TYPERT = {
         typeSymbol: 'dsh-journal-calendar/types#JournalDuty',
         create: _deepseek_ai_dsh_experimental_journal_journal_setDuty_result$schema,
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":379,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":432,"column":9},
     },
   ],
   model: {
@@ -237,6 +280,13 @@ export const TYPERT = {
             "signature": "today(): string",
             "summary": "The local day boundary the service names files by.",
             "jsDoc": "/** The local day boundary the service names files by. */"
+          },
+          {
+            "kind": "method",
+            "name": "search",
+            "signature": "@Remote('search') async search(query: string): Promise<JournalSearchHit[]>",
+            "summary": "Keyword search across every stored day, newest day first.",
+            "jsDoc": "/**\n * Keyword search across every stored day, newest day first.\n *\n * The query matches a title, a detail, or a tag, case-insensitively. Results\n * stop at {@link SEARCH_LIMIT} so one query cannot stream the whole journal\n * into the card; a malformed day file fails the search instead of being\n * skipped, the same way {@link readDay} refuses to repair it.\n * @param query - free text; blank returns no hits.\n * @returns matching entries with the day each one lives in.\n */"
           },
           {
             "kind": "method",
@@ -305,6 +355,10 @@ export const TYPERT = {
           {
             "name": "JournalMonthDay",
             "declaration": "export interface JournalMonthDay {\n    readonly date: string;\n    readonly total: number;\n    readonly memories: number;\n    readonly todos: number;\n    readonly todosPending: number;\n}"
+          },
+          {
+            "name": "JournalSearchHit",
+            "declaration": "export interface JournalSearchHit {\n    readonly date: string;\n    readonly entry: JournalEntry;\n}"
           }
         ]
       }

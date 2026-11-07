@@ -15,9 +15,9 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
-import { CalendarCard, DutyPopover, MemoryEntry, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
-import type { CalendarCardProps, CalendarLabels, DutyPopoverProps } from '../src/client/CalendarCard.tsx'
-import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../src/types.ts'
+import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
+import type { CalendarCardProps, CalendarLabels, DutyPopoverProps, SearchPanelProps } from '../src/client/CalendarCard.tsx'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../src/types.ts'
 
 /** One month row carrying only what the marker rule reads. */
 function row(partial: Partial<JournalMonthDay>): JournalMonthDay {
@@ -44,6 +44,10 @@ function labelsOf(dictionary: Record<string, string>): CalendarLabels {
     dutyHint: dictionary['dutyHint'] ?? '',
     dutyEmptyHint: dictionary['dutyEmptyHint'] ?? '',
     openSource: dictionary['openSource'] ?? '',
+    search: dictionary['search'] ?? '',
+    searchPlaceholder: dictionary['searchPlaceholder'] ?? '',
+    searchEmpty: dictionary['searchEmpty'] ?? '',
+    searchClose: dictionary['searchClose'] ?? '',
   }
 }
 
@@ -111,6 +115,7 @@ describe('CalendarCard render', () => {
       setDone: () => Promise.resolve(),
       loadDuty: () => Promise.resolve(duty),
       saveDuty: () => Promise.resolve(duty),
+      search: () => Promise.resolve<JournalSearchHit[]>([]),
       openSource: () => undefined,
       t: (key: string) => key,
     } as CalendarCardProps
@@ -159,7 +164,8 @@ describe('CalendarCard render', () => {
   it('carries the duty editor behind its button, closed by default', () => {
     const html = render(labelsOf(en))
 
-    expect(html).toContain(`aria-label="${labelsOf(en).editDuty}"`)
+    expect(html).toContain(`aria-label="${escaped(labelsOf(en).editDuty)}"`)
+    expect(html).toContain(`aria-label="${escaped(labelsOf(en).search)}"`)
     expect(html).not.toContain('<textarea')
     expect(html).not.toContain(labelsOf(en).dutyHint)
   })
@@ -229,5 +235,62 @@ describe('DutyPopover render', () => {
 
     expect(html).toContain('journal/invalid-duty')
     expect(html).toContain('duty text')
+  })
+})
+
+describe('SearchPanel render', () => {
+  function hit(date: string, entry: JournalEntry): JournalSearchHit {
+    return { date, entry }
+  }
+
+  function render(labels: CalendarLabels, query: string, results: readonly JournalSearchHit[] | undefined): string {
+    const props = {
+      labels,
+      query,
+      results,
+      failure: undefined,
+      onQuery: () => {},
+      onPick: () => {},
+      onClose: () => {},
+    } as SearchPanelProps
+    return renderToStaticMarkup(createElement(SearchPanel, props))
+  }
+
+  it('renders the field and one row per hit, each labelled by kind and day', () => {
+    const html = render(labelsOf(en), 'search', [
+      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: 'shipped the search' }),
+      hit('2026-09-04', { id: 't1', kind: 'todo', time: '20:00', title: 'write the docs' }),
+    ])
+
+    expect(html).toContain(`placeholder="${escaped(labelsOf(en).searchPlaceholder)}"`)
+    expect(html).toContain('2026-09-03')
+    expect(html).toContain('09:12')
+    expect(html).toContain('shipped the search')
+    expect(html).toContain('2026-09-04')
+    expect(html).toContain('write the docs')
+    // Each row carries its kind, so a todo hit is never mistaken for a memory.
+    expect(html).toContain(`>${escaped(labelsOf(en).todo)}</span>`)
+    expect(html).toContain(`>${escaped(labelsOf(en).memory)}</span>`)
+  })
+
+  it('says nothing matches instead of leaving the list blank', () => {
+    const html = render(labelsOf(en), 'zzz', [])
+
+    expect(html).toContain(labelsOf(en).searchEmpty)
+  })
+
+  it('stays silent before the first answer arrives', () => {
+    const html = render(labelsOf(en), 'search', undefined)
+
+    expect(html).not.toContain(labelsOf(en).searchEmpty)
+    expect(html).not.toContain(`>${escaped(labelsOf(en).todo)}</span>`)
+  })
+
+  it('renders the Chinese copy from its own dictionary', () => {
+    const html = render(labelsOf(zh), '搜索', undefined)
+
+    expect(html).toContain(`placeholder="${escaped(labelsOf(zh).searchPlaceholder)}"`)
+    expect(html).toContain(`aria-label="${escaped(labelsOf(zh).search)}"`)
+    expect(html).toContain(`aria-label="${escaped(labelsOf(zh).searchClose)}"`)
   })
 })

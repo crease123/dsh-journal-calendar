@@ -32,6 +32,10 @@ export type CalendarKey =
   | 'dutyHint'
   | 'dutyEmptyHint'
   | 'openSource'
+  | 'search'
+  | 'searchPlaceholder'
+  | 'searchEmpty'
+  | 'searchClose'
 
 /**
  * English dictionary.
@@ -55,6 +59,10 @@ export const en: Record<CalendarKey, string> = {
   dutyHint: 'Edit system prompt',
   dutyEmptyHint: 'Empty restores the built-in sentence.',
   openSource: 'Show the conversation that recorded this',
+  search: 'Search entries',
+  searchPlaceholder: 'Search titles, details, tags',
+  searchEmpty: 'Nothing matches.',
+  searchClose: 'Close search',
 }
 
 /** Chinese dictionary. */
@@ -73,4 +81,8 @@ export const zh: Record<CalendarKey, string> = {
   dutyHint: '编辑系统提示词',
   dutyEmptyHint: '留空即用内置句子。',
   openSource: '查看记录这条的对话',
+  search: '搜索条目',
+  searchPlaceholder: '搜索标题、详情、标签',
+  searchEmpty: '没有匹配的条目。',
+  searchClose: '关闭搜索',
 }

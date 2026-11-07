@@ -348,3 +348,102 @@
 .failure {
   color: var(--dsw-alias-state-error-primary);
 }
+
+/* Keyword search replaces the day sections while it is open: the field stays
+   at the top and the hits scroll underneath, so the calendar grid keeps its
+   place and the card never grows past the sidebar. */
+.search {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.searchBar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--dsw-alias-brand-primary);
+}
+
+.searchClose {
+  appearance: none;
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.searchClose:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.searchList {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.searchHit {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.searchHit:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.searchHitMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+}
+
+.searchKind {
+  color: var(--dsw-alias-brand-primary);
+  font-weight: 500;
+}
+
+.searchHitTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

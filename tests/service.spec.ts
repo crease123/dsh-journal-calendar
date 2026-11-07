@@ -13,7 +13,7 @@ import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteErrorOf } from '@deepseek-ai/dsh-typert-protocol'
 import { afterEach, describe, expect, it } from 'vitest'
-import { Journal, DEFAULT_DUTY, DUTY_LIMIT, resolveJournalDirectory } from '../src/service.ts'
+import { Journal, DEFAULT_DUTY, DUTY_LIMIT, SEARCH_LIMIT, resolveJournalDirectory } from '../src/service.ts'
 
 const directories: string[] = []
 const contexts: Context[] = []
@@ -308,5 +308,64 @@ describe('record() citation', () => {
 
     expect(entry.sessionId).toBeUndefined()
     expect(entry.turn).toBeUndefined()
+  })
+})
+
+describe('search()', () => {
+  it('finds a word in a title and reports the day it lives in, newest day first', async () => {
+    const { journal } = await mounted()
+    await journal.record({ title: 'ship the calendar search', kind: 'memory', date: '2026-03-04', time: '09:00' })
+    await journal.record({ title: 'ship the release notes', kind: 'memory', date: '2026-03-09', time: '10:00' })
+    await journal.record({ title: 'water the plants', kind: 'todo', date: '2026-03-09', time: '11:00' })
+
+    const hits = await journal.search('ship')
+
+    expect(hits.map(hit => hit.date)).toEqual(['2026-03-09', '2026-03-04'])
+    expect(hits.map(hit => hit.entry.title)).toEqual(['ship the release notes', 'ship the calendar search'])
+  })
+
+  it('matches a detail and a tag, not only the title', async () => {
+    const { journal } = await mounted()
+    await journal.record({ title: 'talked with the team', date: '2026-03-04', detail: 'agreed on the rollout plan' })
+    await journal.record({ title: 'read a paper', date: '2026-03-05', tags: ['research'] })
+
+    await expect(journal.search('rollout')).resolves.toMatchObject([{ entry: { title: 'talked with the team' } }])
+    await expect(journal.search('RESEARCH')).resolves.toMatchObject([{ entry: { title: 'read a paper' } }])
+  })
+
+  it('matches a todo as well as a memory, keeping both kinds', async () => {
+    const { journal } = await mounted()
+    await journal.record({ title: 'review the draft', kind: 'todo', date: '2026-03-04', time: '20:00' })
+    await journal.record({ title: 'review went well', kind: 'memory', date: '2026-03-05', time: '21:00' })
+
+    const hits = await journal.search('review')
+
+    expect(hits.map(hit => hit.entry.kind)).toEqual(['memory', 'todo'])
+  })
+
+  it('answers a blank query with nothing, reading no day at all', async () => {
+    const { journal, dir } = await mounted()
+    await journal.record({ title: 'anything', date: '2026-03-04' })
+
+    await expect(journal.search('   ')).resolves.toEqual([])
+    // The day file is still the only file: search wrote nothing and removed nothing.
+    expect(await readdir(dir)).toEqual(['2026-03-04.json'])
+  })
+
+  it('answers a matchless query with an empty list', async () => {
+    const { journal } = await mounted()
+    await journal.record({ title: 'a memory', date: '2026-03-04' })
+
+    await expect(journal.search('zzz')).resolves.toEqual([])
+  })
+
+  it('stops at the hit limit instead of streaming the whole journal', async () => {
+    const { journal, dir } = await mounted()
+    const entries = Array.from({ length: SEARCH_LIMIT + 5 }, (_value, index) => ({
+      id: `entry-${index}`, kind: 'memory', time: '10:00', title: `needle ${index}`,
+    }))
+    await writeFile(join(dir, '2026-03-04.json'), JSON.stringify({ version: 1, date: '2026-03-04', entries }))
+
+    await expect(journal.search('needle')).resolves.toHaveLength(SEARCH_LIMIT)
   })
 })

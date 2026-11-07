@@ -65,6 +65,14 @@ export interface JournalEntryInput {
   readonly id?: string
 }
 
+/** One search result: an entry and the day that holds it. */
+export interface JournalSearchHit {
+  /** `YYYY-MM-DD` of the day file the entry lives in. */
+  readonly date: string
+  /** The matching entry, exactly as stored. */
+  readonly entry: JournalEntry
+}
+
 /** Per-day summary the calendar grid draws its markers from. */
 export interface JournalMonthDay {
   /** `YYYY-MM-DD`. */

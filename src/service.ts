@@ -34,6 +34,7 @@ import type {
   JournalEntryInput,
   JournalEntryKind,
   JournalMonthDay,
+  JournalSearchHit,
 } from './types.ts'
 
 export type * from './types.ts'
@@ -63,6 +64,9 @@ export const DEFAULT_DUTY
 const DUTY_FILE = 'duty.md'
 /** Upper bound on the duty text, so the section cannot silently bloat the prompt. */
 export const DUTY_LIMIT = 2000
+
+/** Upper bound on search hits, so one query cannot stream the whole journal into the card. */
+export const SEARCH_LIMIT = 100
 
 /** Local date, not UTC: the calendar flips pages in the user's timezone. */
 function localDate(now = new Date()): string {
@@ -155,6 +159,17 @@ export function resolveJournalDirectory(config: Config = {}): string {
   return join(process.env['DSH_HOME'] ?? join(homedir(), '.dsh'), 'journal')
 }
 
+/**
+ * Whether one entry carries the search needle.
+ * @param entry - stored entry.
+ * @param needle - lower-cased, trimmed query.
+ * @returns true when the title, detail, or a tag contains the needle.
+ */
+function matchesQuery(entry: JournalEntry, needle: string): boolean {
+  const haystack = [entry.title, entry.detail ?? '', ...entry.tags ?? []].join('\n').toLowerCase()
+  return haystack.includes(needle)
+}
+
 /** One JSON file per day, plus the Remote surface the calendar card reads. */
 export class Journal extends TypertRemoteService {
   static Config: z<Config> = z.object({ dir: z.string().default('') })
@@ -238,6 +253,44 @@ export class Journal extends TypertRemoteService {
   /** The local day boundary the service names files by. */
   today(): string {
     return localDate()
+  }
+
+  /**
+   * Keyword search across every stored day, newest day first.
+   *
+   * The query matches a title, a detail, or a tag, case-insensitively. Results
+   * stop at {@link SEARCH_LIMIT} so one query cannot stream the whole journal
+   * into the card; a malformed day file fails the search instead of being
+   * skipped, the same way {@link readDay} refuses to repair it.
+   * @param query - free text; blank returns no hits.
+   * @returns matching entries with the day each one lives in.
+   */
+  @Remote('search')
+  async search(query: string): Promise<JournalSearchHit[]> {
+    const needle = query.trim().toLowerCase()
+    if (needle === '') return []
+    let names: string[]
+    try {
+      names = await readdir(this.directory)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+      throw error
+    }
+    const dates = names
+      .map(name => DAY_FILE_PATTERN.exec(name)?.[1])
+      .filter((date): date is string => date !== undefined)
+      .sort()
+      .reverse()
+    const hits: JournalSearchHit[] = []
+    for (const date of dates) {
+      const day = await this.readDay(date)
+      for (const entry of day.entries) {
+        if (!matchesQuery(entry, needle)) continue
+        hits.push({ date, entry })
+        if (hits.length >= SEARCH_LIMIT) return hits
+      }
+    }
+    return hits
   }
 
   /**

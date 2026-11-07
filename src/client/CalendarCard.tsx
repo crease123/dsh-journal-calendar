@@ -23,7 +23,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import clsx from 'clsx'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../types.ts'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../types.ts'
 import css from './CalendarCard.module.css'
 
 /** Copy resolved for the active locale by the plugin's inject face. */
@@ -49,6 +49,14 @@ export interface CalendarLabels {
   dutyEmptyHint: string
   /** Accessible name of a memory that links back to the conversation that recorded it. */
   openSource: string
+  /** Accessible name of the header button that opens keyword search. */
+  search: string
+  /** Placeholder of the search field. */
+  searchPlaceholder: string
+  /** Shown when a query matches nothing. */
+  searchEmpty: string
+  /** Accessible name of the button that closes search. */
+  searchClose: string
 }
 
 /** Data access handed to the body by the plugin's inject face. */
@@ -66,6 +74,8 @@ export interface CalendarInjected {
   saveDuty: (text: string) => Promise<JournalDuty>
   /** Show the conversation that recorded this entry, at the turn it was recorded in. */
   openSource: (entry: JournalEntry) => void
+  /** Keyword search across every stored day, newest day first. */
+  search: (query: string) => Promise<JournalSearchHit[]>
 }
 
 /** The body's composed props: the tab it draws, the data face, and its copy. */
@@ -88,6 +98,83 @@ export interface DutyPopoverProps {
   onDiscard: () => void
 }
 
+/** The search field's copy, its results, and the two gestures that leave it. */
+export interface SearchPanelProps {
+  labels: CalendarLabels
+  /** Current query, owned by the card so the field survives re-renders. */
+  query: string
+  /** Hits for the current query; `undefined` while the first answer is pending. */
+  results: readonly JournalSearchHit[] | undefined
+  failure: string | undefined
+  onQuery: (text: string) => void
+  onPick: (hit: JournalSearchHit) => void
+  onClose: () => void
+}
+
+/**
+ * Keyword search over every stored day, drawn in place of the day sections.
+ * @param props - the query, its hits, and the gestures that leave the panel.
+ * @returns the field, its failure line, and one row per hit.
+ */
+export function SearchPanel(props: SearchPanelProps): ReactNode {
+  const field = useRef<HTMLInputElement | null>(null)
+
+  // Opening the panel is a request to type: focus follows it.
+  useEffect(() => {
+    field.current?.focus()
+  }, [])
+
+  const query = props.query.trim()
+  return (
+    <div className={css.search}>
+      <div className={css.searchBar}>
+        <input
+          ref={field}
+          type="search"
+          className={css.searchInput}
+          value={props.query}
+          placeholder={props.labels.searchPlaceholder}
+          aria-label={props.labels.search}
+          onChange={event => props.onQuery(event.target.value)}
+          onKeyDown={(event) => { if (event.key === 'Escape') props.onClose() }}
+        />
+        <button
+          type="button"
+          className={css.searchClose}
+          aria-label={props.labels.searchClose}
+          title={props.labels.searchClose}
+          onClick={props.onClose}
+        >
+          ✕
+        </button>
+      </div>
+      {props.failure === undefined ? null : <div className={css.failure}>{props.failure}</div>}
+      {query === '' || props.results === undefined ? null : props.results.length === 0
+        ? <div className={css.empty}>{props.labels.searchEmpty}</div>
+        : (
+          <div className={css.searchList}>
+            {props.results.map(hit => (
+              <button
+                key={`${hit.date}:${hit.entry.id}`}
+                type="button"
+                className={css.searchHit}
+                onClick={() => props.onPick(hit)}
+              >
+                <span className={css.searchHitMeta}>
+                  <span className={css.searchKind}>
+                    {hit.entry.kind === 'todo' ? props.labels.todo : props.labels.memory}
+                  </span>
+                  <span className={css.time}>{hit.date} · {hit.entry.time}</span>
+                </span>
+                <span className={css.searchHitTitle}>{hit.entry.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
+    </div>
+  )
+}
+
 /** One memory row: its chips, time, and the title that links back to where it was recorded. */
 export function MemoryEntry({ labels, entry, openSource }: {
   labels: CalendarLabels
@@ -95,7 +182,7 @@ export function MemoryEntry({ labels, entry, openSource }: {
   openSource: (entry: JournalEntry) => void
 }): ReactNode {
   return (
-    <div className={css.memory}>
+    <div className={css.memory} data-entry-id={entry.id}>
       <div className={css.memoryHead}>
         <span className={css.chips}>
           {(entry.tags ?? []).map(tag => <em key={tag} className={css.chip}>{tag}</em>)}
@@ -239,6 +326,12 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
   const [editingDuty, setEditingDuty] = useState(false)
   const [dutyFailure, setDutyFailure] = useState<string | undefined>(undefined)
   const [savingDuty, setSavingDuty] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<readonly JournalSearchHit[] | undefined>(undefined)
+  const [searchFailure, setSearchFailure] = useState<string | undefined>(undefined)
+  const [highlight, setHighlight] = useState<string | undefined>(undefined)
+  const root = useRef<HTMLDivElement | null>(null)
 
   // Presentation-local data: the card is the only thing that knows which month
   // it is showing, so the fetch result lives in component state.
@@ -258,6 +351,40 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
       .catch((error: unknown) => { if (live) setFailure(String(error)) })
     return () => { live = false }
   }, [selected, props])
+
+  // Keyword search runs on a short debounce so typing does not ask the Host per
+  // keystroke; a newer query supersedes the pending timer and its answer.
+  useEffect(() => {
+    if (!searchOpen) return
+    const needle = query.trim()
+    if (needle === '') {
+      setResults(undefined)
+      setSearchFailure(undefined)
+      return
+    }
+    let live = true
+    const timer = window.setTimeout(() => {
+      void props.search(needle)
+        .then((hits) => { if (live) { setResults(hits); setSearchFailure(undefined) } })
+        .catch((error: unknown) => { if (live) setSearchFailure(String(error)) })
+    }, 250)
+    return () => { live = false; window.clearTimeout(timer) }
+  }, [query, searchOpen, props])
+
+  // A picked result selects its day first; this scrolls that entry into view
+  // once the day list holds it, then flashes it the way a conversation jump does.
+  useEffect(() => {
+    if (highlight === undefined) return
+    const node = root.current?.querySelector<HTMLElement>(`[data-entry-id="${highlight}"]`)
+    if (node === null || node === undefined) return
+    const reveal = css.revealed
+    if (reveal === undefined) return
+    node.scrollIntoView({ block: 'center' })
+    node.classList.add(reveal)
+    const timer = window.setTimeout(() => { node.classList.remove(reveal) }, 1600)
+    setHighlight(undefined)
+    return () => { window.clearTimeout(timer) }
+  }, [highlight, day])
 
   const byDate = useMemo(() => new Map(days.map(row => [row.date, row])), [days])
   const cells = useMemo(() => {
@@ -357,12 +484,43 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
     else closeDuty()
   }
 
+  const closeSearch = (): void => {
+    setSearchOpen(false)
+    setQuery('')
+    setResults(undefined)
+    setSearchFailure(undefined)
+  }
+
+  /** Open search over the calendar; the duty editor and search never share the card. */
+  const openSearch = (): void => {
+    closeDuty()
+    setSearchOpen(true)
+  }
+
+  /** Show one hit: switch month and day, leave search, then let the highlight effect scroll to it. */
+  const pickHit = (hit: JournalSearchHit): void => {
+    setMonth(hit.date.slice(0, 7))
+    setSelected(hit.date)
+    closeSearch()
+    setHighlight(hit.entry.id)
+  }
+
   return (
-    <div className={css.root}>
+    <div className={css.root} ref={root}>
       <div className={css.header}>
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
         <span className={css.month}>{label}</span>
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
+        <button
+          type="button"
+          className={css.edit}
+          aria-label={props.labels.search}
+          title={props.labels.search}
+          aria-pressed={searchOpen}
+          onClick={() => { if (searchOpen) closeSearch(); else openSearch() }}
+        >
+          🔍
+        </button>
         <button
           type="button"
           className={clsx(css.edit, dutyChanged && css.editReady)}
@@ -416,6 +574,17 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
 
       {failure === undefined ? null : <div className={css.failure}>{failure}</div>}
 
+      {searchOpen ? (
+        <SearchPanel
+          labels={props.labels}
+          query={query}
+          results={results}
+          failure={searchFailure}
+          onQuery={setQuery}
+          onPick={pickHit}
+          onClose={closeSearch}
+        />
+      ) : (
       <div className={css.day}>
         <div className={css.dayTitle}>{selected}</div>
 
@@ -429,6 +598,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
                 className={css.todoRow}
                 aria-label={props.labels.toggleTodo}
                 aria-pressed={entry.done === true}
+                data-entry-id={entry.id}
                 disabled={writing.includes(entry.id)}
                 onClick={() => { void toggle(entry.id, entry.done !== true) }}
               >
@@ -451,6 +621,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
 
         {todos.length === 0 && memories.length === 0 ? <div className={css.empty}>{props.labels.empty}</div> : null}
       </div>
+      )}
     </div>
   )
 }

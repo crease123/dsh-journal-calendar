@@ -19,7 +19,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import { CalendarCard, type CalendarInjected } from './CalendarCard.tsx'
 import { en, zh } from './locales.ts'
 import { revealTurn } from './reveal.ts'
-import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from '../types.ts'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../types.ts'
 
 /** Tab type identity; also the key of the body seat. */
 const ID = 'dsh-journal-calendar'
@@ -39,6 +39,7 @@ interface JournalRemote {
   setDone: (id: string, done: boolean, date: string) => Promise<RemoteResult<JournalEntry>>
   duty: () => Promise<RemoteResult<JournalDuty>>
   setDuty: (text: string) => Promise<RemoteResult<JournalDuty>>
+  search: (query: string) => Promise<RemoteResult<JournalSearchHit[]>>
 }
 
 /** Unwrap a Remote result, raising its failure as a plain error. */
@@ -101,6 +102,10 @@ export function apply(ctx: ClientContext): void {
         dutyHint: t('dutyHint'),
         dutyEmptyHint: t('dutyEmptyHint'),
         openSource: t('openSource'),
+        search: t('search'),
+        searchPlaceholder: t('searchPlaceholder'),
+        searchEmpty: t('searchEmpty'),
+        searchClose: t('searchClose'),
       },
       loadMonth: async (month) => {
         await mounted
@@ -121,6 +126,10 @@ export function apply(ctx: ClientContext): void {
       saveDuty: async (text) => {
         await mounted
         return unwrap(await remote().setDuty(text))
+      },
+      search: async (query) => {
+        await mounted
+        return unwrap(await remote().search(query))
       },
       openSource: (entry) => {
         const sessionId = entry.sessionId

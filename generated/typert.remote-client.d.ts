@@ -3,13 +3,14 @@ import type {
   RemoteResult,
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
-import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay } from 'dsh-journal-calendar/types'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from 'dsh-journal-calendar/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$6a6f75726e616c {
     day: (date: string) => Promise<RemoteResult<JournalDay>>
     duty: () => Promise<RemoteResult<JournalDuty>>
     month: (month: string) => Promise<RemoteResult<JournalMonthDay[]>>
+    search: (query: string) => Promise<RemoteResult<JournalSearchHit[]>>
     setDone: (id: string, done: boolean, date: string) => Promise<RemoteResult<JournalEntry>>
     setDuty: (text: string) => Promise<RemoteResult<JournalDuty>>
   }
@@ -17,6 +18,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'journal/day': (date: string) => Promise<RemoteResult<JournalDay>>
     'journal/duty': () => Promise<RemoteResult<JournalDuty>>
     'journal/month': (month: string) => Promise<RemoteResult<JournalMonthDay[]>>
+    'journal/search': (query: string) => Promise<RemoteResult<JournalSearchHit[]>>
     'journal/setDone': (id: string, done: boolean, date: string) => Promise<RemoteResult<JournalEntry>>
     'journal/setDuty': (text: string) => Promise<RemoteResult<JournalDuty>>
   }

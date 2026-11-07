@@ -87,6 +87,10 @@ Recording the same `id` twice returns the stored entry instead of appending a se
 
 An entry recorded from a conversation also stores that Session and the turn it came from, so a memory in the card is a link: clicking one switches to the conversation and scrolls to the turn the entry was recorded in, with a brief highlight. Entries written outside a conversation (hand-edited files, or anything recorded before this existed) carry no source and stay plain text. The scroll addresses turns through the Web client's `data-chat-turn` attribute; if a future client stops publishing it, the click still opens the conversation and simply does not scroll.
 
+### Searching the journal
+
+The 🔍 button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title, detail, and tags, case-insensitively and newest day first; each hit carries its kind and day. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
+
 ### Editing the duty sentence
 
 That prompt sentence is yours to rewrite. The calendar card carries a ✎ button beside the month heading: it opens an inline editor prefilled with the text now in effect, with Save, Reset, and Cancel. The text lands in `$DSH_HOME/journal/duty.md` (beside the day files, following `dir`), and the **next message** already carries it — the section is re-read on every prompt assembly, with no reload. Clearing the editor and saving removes the file and restores the built-in sentence. The limit is 2000 characters; the text is inserted verbatim, so `{{` in it is your own writing, not a variable reference.
