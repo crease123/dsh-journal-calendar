@@ -98,6 +98,58 @@ export interface DutyPopoverProps {
   onDiscard: () => void
 }
 
+/** Where a query was found, and an excerpt that shows it in context. */
+export interface MatchSnippet {
+  readonly field: 'title' | 'detail' | 'tag'
+  /** The matching text itself, or a window of it centred on the match. */
+  readonly excerpt: string
+}
+
+/** One excerpt window either side of the match, in characters. */
+const EXCERPT_PAD = 24
+
+/**
+ * Locate the query in one entry, field by field, and excerpt the match.
+ *
+ * The result row shows the title, so a hit whose match lives in the detail or
+ * a tag would otherwise look unrelated to what was typed.
+ * @param entry - the hit to explain.
+ * @param query - the text the owner typed.
+ * @returns the matched field and its excerpt, or undefined when only the day matched nothing.
+ */
+export function matchSnippet(entry: JournalEntry, query: string): MatchSnippet | undefined {
+  const needle = query.trim().toLowerCase()
+  if (needle === '') return undefined
+  const at = (text: string): number => text.toLowerCase().indexOf(needle)
+  if (at(entry.title) >= 0) return { field: 'title', excerpt: entry.title }
+  const detail = entry.detail ?? ''
+  const detailAt = at(detail)
+  if (detailAt >= 0) {
+    const start = Math.max(0, detailAt - EXCERPT_PAD)
+    const end = Math.min(detail.length, detailAt + needle.length + EXCERPT_PAD)
+    return {
+      field: 'detail',
+      excerpt: `${start > 0 ? '…' : ''}${detail.slice(start, end)}${end < detail.length ? '…' : ''}`,
+    }
+  }
+  const tag = (entry.tags ?? []).find(candidate => at(candidate) >= 0)
+  if (tag !== undefined) return { field: 'tag', excerpt: tag }
+  return undefined
+}
+
+/** The excerpt with the matched run marked, so the hit explains itself. */
+function Excerpt({ text, needle }: { text: string; needle: string }): ReactNode {
+  const at = text.toLowerCase().indexOf(needle)
+  if (at < 0) return <>{text}</>
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className={css.searchHitMark}>{text.slice(at, at + needle.length)}</mark>
+      {text.slice(at + needle.length)}
+    </>
+  )
+}
+
 /** The search field's copy, its results, and the two gestures that leave it. */
 export interface SearchPanelProps {
   labels: CalendarLabels
@@ -153,22 +205,33 @@ export function SearchPanel(props: SearchPanelProps): ReactNode {
         ? <div className={css.empty}>{props.labels.searchEmpty}</div>
         : (
           <div className={css.searchList}>
-            {props.results.map(hit => (
-              <button
-                key={`${hit.date}:${hit.entry.id}`}
-                type="button"
-                className={css.searchHit}
-                onClick={() => props.onPick(hit)}
-              >
-                <span className={css.searchHitMeta}>
-                  <span className={css.searchKind}>
-                    {hit.entry.kind === 'todo' ? props.labels.todo : props.labels.memory}
+            {props.results.map((hit) => {
+              const snippet = matchSnippet(hit.entry, query)
+              // A title match is already on screen; detail and tag matches need the excerpt.
+              const why = snippet !== undefined && snippet.field !== 'title' ? snippet : undefined
+              return (
+                <button
+                  key={`${hit.date}:${hit.entry.id}`}
+                  type="button"
+                  className={css.searchHit}
+                  onClick={() => props.onPick(hit)}
+                >
+                  <span className={css.searchHitMeta}>
+                    <span className={css.searchKind}>
+                      {hit.entry.kind === 'todo' ? props.labels.todo : props.labels.memory}
+                    </span>
+                    <span className={css.time}>{hit.date} · {hit.entry.time}</span>
                   </span>
-                  <span className={css.time}>{hit.date} · {hit.entry.time}</span>
-                </span>
-                <span className={css.searchHitTitle}>{hit.entry.title}</span>
-              </button>
-            ))}
+                  <span className={css.searchHitTitle}>{hit.entry.title}</span>
+                  {why === undefined ? null : (
+                    <span className={css.searchHitExcerpt}>
+                      {why.field === 'tag' ? '#' : null}
+                      <Excerpt text={why.excerpt} needle={query.trim().toLowerCase()} />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         )}
     </div>
