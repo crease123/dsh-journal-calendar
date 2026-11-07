@@ -517,37 +517,45 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
       <div className={css.header}>
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
         <span className={css.month}>{label}</span>
-        <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
-        <button
-          type="button"
-          className={css.edit}
-          aria-label={props.labels.search}
-          title={props.labels.search}
-          aria-pressed={searchOpen}
-          onClick={() => { if (searchOpen) closeSearch(); else openSearch() }}
-        >
-          <svg
-            className={css.icon}
-            viewBox="0 0 16 16"
-            width="14"
-            height="14"
-            aria-hidden="true"
-            focusable="false"
+        <div className={css.actions}>
+          <button
+            type="button"
+            className={css.edit}
+            aria-label={props.labels.search}
+            title={props.labels.search}
+            aria-pressed={searchOpen}
+            onClick={() => { if (searchOpen) closeSearch(); else openSearch() }}
           >
-            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10.4 10.4 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className={clsx(css.edit, dutyChanged && css.editReady)}
-          aria-label={dutyChanged ? props.labels.dutySave : props.labels.editDuty}
-          title={dutyChanged ? props.labels.dutySave : props.labels.editDuty}
-          disabled={savingDuty}
-          onClick={onDutyButton}
-        >
-          {dutyChanged ? '✓' : '✎'}
-        </button>
+            <svg
+              className={css.icon}
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M10.4 10.4 14 14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={clsx(css.edit, dutyChanged && css.editReady)}
+            aria-label={dutyChanged ? props.labels.dutySave : props.labels.editDuty}
+            title={dutyChanged ? props.labels.dutySave : props.labels.editDuty}
+            disabled={savingDuty}
+            onClick={onDutyButton}
+          >
+            {dutyChanged ? '✓' : '✎'}
+          </button>
+        </div>
+        <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
       </div>
 
       {editingDuty && duty !== undefined ? (
