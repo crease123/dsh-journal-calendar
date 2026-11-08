@@ -283,6 +283,13 @@
   flex: 1 1 auto;
 }
 
+/* The tag sits between the title and the time; centring keeps the chip from
+   riding the text baseline like a letter. */
+.todoRow .chip {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
 .todoFinished {
   color: var(--dsw-alias-label-tertiary);
   text-decoration: line-through;
@@ -349,14 +356,27 @@
   gap: 4px;
 }
 
+/* A chip carries its tag's hue, which is what makes five tags readable at a
+   glance. The hues are literals because the theme palette has no violet; text
+   and fill are mixed against the theme's label colour, so the same rule stays
+   legible on the light and the dark surface. */
 .chip {
-  padding: 1px 6px;
+  --tag-hue: var(--dsw-alias-label-secondary);
+  padding: 0 6px;
   border-radius: 4px;
-  background: var(--dsw-alias-bg-layer-3);
-  color: var(--dsw-alias-label-secondary);
+  background: color-mix(in srgb, var(--tag-hue) 15%, transparent);
+  color: color-mix(in srgb, var(--tag-hue) 78%, var(--dsw-alias-label-primary));
   font-size: var(--dsh-content-font-size-caption, 11px);
   font-style: normal;
+  line-height: 17px;
+  white-space: nowrap;
 }
+
+.chip[data-tag='work'] { --tag-hue: rgb(96, 149, 255); }
+.chip[data-tag='study'] { --tag-hue: rgb(167, 139, 250); }
+.chip[data-tag='life'] { --tag-hue: rgb(240, 180, 100); }
+.chip[data-tag='health'] { --tag-hue: rgb(78, 209, 126); }
+.chip[data-tag='other'] { --tag-hue: rgb(150, 160, 175); }
 
 .empty {
   color: var(--dsw-alias-label-tertiary);

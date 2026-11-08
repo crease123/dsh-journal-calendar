@@ -85,6 +85,8 @@ The plugin registers the `journal_record` tool and one prompt sentence telling t
 
 `tag` is one of five fixed values — `work`, `study`, `life`, `health`, `other` — and the card draws it as a chip: 工作, 学习, 生活, 健康, 其他 in Chinese, Work…Other in English. A closed set is what keeps the journal scannable: with free-form labels it drifted to 342 distinct tags over 227 entries, and every extra one made the chips harder to read. The tool lists the five with what each covers, so the agent can pick one without guessing.
 
+The chip is tinted with its tag's hue — blue for work, violet for study, amber for life, green for health, grey for other — and the same chip appears on a todo row beside the title, so both sections read at one glance. The tint is mixed against the theme's label colour, so the five hues stay legible in the light and the dark surface alike.
+
 Day files written before this change carry free-form `tags` arrays. They are read back as one tag: a label that names one of the five maps to it, anything else becomes `other`, and an entry with no labels keeps none. No file has to be rewritten for the card to work.
 
 Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.

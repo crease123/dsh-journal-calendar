@@ -15,7 +15,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { en, tagLabels, zh } from '../src/client/locales.ts'
-import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
+import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, TodoRow, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
 import type { CalendarCardProps, CalendarLabels, DutyPopoverProps, SearchPanelProps } from '../src/client/CalendarCard.tsx'
 import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../src/types.ts'
 
@@ -162,6 +162,54 @@ describe('CalendarCard render', () => {
     expect(html).not.toContain(escaped(labelsOf(en).openSource))
   })
 
+  it('tints a memory\'s tag chip with the tag it names', () => {
+    const html = renderToStaticMarkup(createElement(MemoryEntry, {
+      labels: labelsOf(zh),
+      entry: { id: 'c', kind: 'memory', time: '12:00', title: '读了点论文', tag: 'study' },
+      openSource: () => undefined,
+    }))
+
+    expect(html).toContain('data-tag="study"')
+    expect(html).toContain('>学习</em>')
+  })
+
+  it('draws a todo with its tag between the title and the time', () => {
+    const html = renderToStaticMarkup(createElement(TodoRow, {
+      labels: labelsOf(zh),
+      entry: { id: 'd', kind: 'todo', time: '09:00', title: '完成申请', tag: 'work' },
+      pending: false,
+      onToggle: () => undefined,
+    }))
+
+    expect(html).toContain('data-entry-id="d"')
+    expect(html).toContain('完成申请')
+    expect(html).toContain('data-tag="work"')
+    expect(html).toContain('>工作</em>')
+    // Title, tag, then the time: the tag never separates the title from its row.
+    expect(html.indexOf('完成申请')).toBeLessThan(html.indexOf('data-tag="work"'))
+    expect(html.indexOf('data-tag="work"')).toBeLessThan(html.indexOf('09:00'))
+  })
+
+  it('reports a todo\'s done state and its in-flight write', () => {
+    const done = renderToStaticMarkup(createElement(TodoRow, {
+      labels: labelsOf(en),
+      entry: { id: 'e', kind: 'todo', time: '10:00', title: 'shipped', done: true },
+      pending: false,
+      onToggle: () => undefined,
+    }))
+    const pending = renderToStaticMarkup(createElement(TodoRow, {
+      labels: labelsOf(en),
+      entry: { id: 'f', kind: 'todo', time: '10:00', title: 'shipping' },
+      pending: true,
+      onToggle: () => undefined,
+    }))
+
+    expect(done).toContain('aria-pressed="true"')
+    expect(pending).toContain('disabled=""')
+    // No tag recorded, no chip: the row stays as narrow as it was.
+    expect(done).not.toContain('<em')
+  })
+
   it('carries the duty editor behind its button, closed by default', () => {
     const html = render(labelsOf(en))
 
@@ -280,6 +328,8 @@ describe('SearchPanel render', () => {
     ])
 
     expect(html).toContain('read a paper')
+    // The chip names the tag and carries its id, which is what picks the hue.
+    expect(html).toContain('data-tag="study"')
     expect(html).toContain('Study</em>')
   })
 

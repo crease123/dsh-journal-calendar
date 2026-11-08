@@ -172,7 +172,7 @@ export function SearchPanel(props: SearchPanelProps): ReactNode {
                 {hit.entry.tag === undefined ? null : (
                   // The tag is searchable, so a hit that matched one shows it here.
                   <span className={css.chips}>
-                    <em className={css.chip}>{props.labels.tags[hit.entry.tag]}</em>
+                    <TagChip tag={hit.entry.tag} label={props.labels.tags[hit.entry.tag]} />
                   </span>
                 )}
               </button>
@@ -180,6 +180,45 @@ export function SearchPanel(props: SearchPanelProps): ReactNode {
           </div>
         )}
     </div>
+  )
+}
+
+/**
+ * One tag, drawn as a tinted chip. The hue identifies the tag, the text names it,
+ * so the card needs no legend.
+ * @param props - the tag and its localized label.
+ * @returns the chip element.
+ */
+export function TagChip({ tag, label }: { tag: JournalTag; label: string }): ReactNode {
+  return <em className={css.chip} data-tag={tag}>{label}</em>
+}
+
+/**
+ * One todo row: the mark whose click flips it, the title, the tag, and the time.
+ * @param props - the entry, whether its write is in flight, and the flip gesture.
+ * @returns the row as a button, so the whole line is the target.
+ */
+export function TodoRow({ labels, entry, pending, onToggle }: {
+  labels: CalendarLabels
+  entry: JournalEntry
+  pending: boolean
+  onToggle: (id: string, done: boolean) => void
+}): ReactNode {
+  return (
+    <button
+      type="button"
+      className={css.todoRow}
+      aria-label={labels.toggleTodo}
+      aria-pressed={entry.done === true}
+      data-entry-id={entry.id}
+      disabled={pending}
+      onClick={() => onToggle(entry.id, entry.done !== true)}
+    >
+      <span className={clsx(css.todoMark, entry.done === true && css.todoMarkDone)} />
+      <span className={clsx(css.todoTitle, entry.done === true && css.todoFinished)}>{entry.title}</span>
+      {entry.tag === undefined ? null : <TagChip tag={entry.tag} label={labels.tags[entry.tag]} />}
+      <span className={css.time}>{entry.time}</span>
+    </button>
   )
 }
 
@@ -193,7 +232,7 @@ export function MemoryEntry({ labels, entry, openSource }: {
     <div className={css.memory} data-entry-id={entry.id}>
       <div className={css.memoryHead}>
         <span className={css.chips}>
-          {entry.tag === undefined ? null : <em className={css.chip}>{labels.tags[entry.tag]}</em>}
+          {entry.tag === undefined ? null : <TagChip tag={entry.tag} label={labels.tags[entry.tag]} />}
         </span>
         <span className={css.time}>{entry.time}</span>
       </div>
@@ -619,20 +658,13 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
           <>
             <div className={css.section}>{props.labels.todo}</div>
             {todos.map(entry => (
-              <button
+              <TodoRow
                 key={entry.id}
-                type="button"
-                className={css.todoRow}
-                aria-label={props.labels.toggleTodo}
-                aria-pressed={entry.done === true}
-                data-entry-id={entry.id}
-                disabled={writing.includes(entry.id)}
-                onClick={() => { void toggle(entry.id, entry.done !== true) }}
-              >
-                <span className={clsx(css.todoMark, entry.done === true && css.todoMarkDone)} />
-                <span className={clsx(css.todoTitle, entry.done === true && css.todoFinished)}>{entry.title}</span>
-                <span className={css.time}>{entry.time}</span>
-              </button>
+                labels={props.labels}
+                entry={entry}
+                pending={writing.includes(entry.id)}
+                onToggle={(id, done) => { void toggle(id, done) }}
+              />
             ))}
           </>
         )}
