@@ -10,6 +10,16 @@
  */
 export type JournalEntryKind = 'todo' | 'memory'
 
+/**
+ * The five tags an entry can carry — one per entry. Ids are stable across
+ * releases; the card renders them through its `tagLabels` dictionary entry, and
+ * `journal_record` offers exactly this set.
+ */
+export type JournalTag = 'work' | 'study' | 'life' | 'health' | 'other'
+
+/** Every tag, in the order `tagLabels` lists its copy. */
+export const JOURNAL_TAGS: readonly JournalTag[] = ['work', 'study', 'life', 'health', 'other']
+
 /** One journal entry: the unit the calendar card renders one by one. */
 export interface JournalEntry {
   /** Stable identity; repeating the same id is idempotent. */
@@ -20,8 +30,8 @@ export interface JournalEntry {
   readonly time: string
   /** One-line summary shown as the entry's main line. */
   readonly title: string
-  /** Optional short tags rendered as chips (for example `人际`). */
-  readonly tags?: readonly string[]
+  /** The one tag the card shows as a chip and search matches. */
+  readonly tag?: JournalTag
   /** Present for `todo` only: whether it is done. */
   readonly done?: boolean
   /** Live Session that produced the entry, when the caller had one. */
@@ -45,8 +55,8 @@ export interface JournalEntryInput {
   readonly title: string
   /** Defaults to `memory`. */
   readonly kind?: JournalEntryKind
-  /** Optional short tags. */
-  readonly tags?: readonly string[]
+  /** The one tag; the card renders it as a chip. */
+  readonly tag?: JournalTag
   /** Live Session that produced the entry. */
   readonly sessionId?: string
   /** Turn within that Session; the service fills it from the Session's own events. */

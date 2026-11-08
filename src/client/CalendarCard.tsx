@@ -23,7 +23,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import clsx from 'clsx'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../types.ts'
+import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit, JournalTag } from '../types.ts'
 import css from './CalendarCard.module.css'
 
 /** Copy resolved for the active locale by the plugin's inject face. */
@@ -47,6 +47,8 @@ export interface CalendarLabels {
   dutyHint: string
   /** Placeholder shown once the draft is cleared. */
   dutyEmptyHint: string
+  /** The five tag chips' text, keyed by tag id. */
+  tags: Record<JournalTag, string>
   /** Accessible name of a memory that links back to the conversation that recorded it. */
   openSource: string
   /** Accessible name of the header button that opens keyword search. */
@@ -167,10 +169,10 @@ export function SearchPanel(props: SearchPanelProps): ReactNode {
                   <span className={css.time}>{hit.date} · {hit.entry.time}</span>
                 </span>
                 <span className={css.searchHitTitle}>{hit.entry.title}</span>
-                {hit.entry.tags === undefined || hit.entry.tags.length === 0 ? null : (
-                  // Tags are searchable, so a hit that matched one shows them here.
+                {hit.entry.tag === undefined ? null : (
+                  // The tag is searchable, so a hit that matched one shows it here.
                   <span className={css.chips}>
-                    {hit.entry.tags.map(tag => <em key={tag} className={css.chip}>{tag}</em>)}
+                    <em className={css.chip}>{props.labels.tags[hit.entry.tag]}</em>
                   </span>
                 )}
               </button>
@@ -191,7 +193,7 @@ export function MemoryEntry({ labels, entry, openSource }: {
     <div className={css.memory} data-entry-id={entry.id}>
       <div className={css.memoryHead}>
         <span className={css.chips}>
-          {(entry.tags ?? []).map(tag => <em key={tag} className={css.chip}>{tag}</em>)}
+          {entry.tag === undefined ? null : <em className={css.chip}>{labels.tags[entry.tag]}</em>}
         </span>
         <span className={css.time}>{entry.time}</span>
       </div>
@@ -584,6 +586,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
               key={date}
               type="button"
               className={clsx(css.cell, date === selected && css.cellSelected)}
+              aria-pressed={date === selected}
               onClick={() => setSelected(date)}
             >
               <span>{dayNumber}</span>
@@ -610,8 +613,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
           onClose={closeSearch}
         />
       ) : (
-      <div className={css.day}>
-        <div className={css.dayTitle}>{selected}</div>
+      <div className={css.day} role="group" aria-label={selected}>
 
         {todos.length === 0 ? null : (
           <>

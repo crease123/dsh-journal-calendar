@@ -86,6 +86,7 @@ describe.skipIf(!existsSync(CLIENT_BUNDLE))('executing the built client bundle',
     expect(tabs[0]?.kind).toBe('journal')
     // The tab's guide row is what the sidebar's tab picker lists.
     expect(tabs[0]?.guide).toHaveLength(1)
-    expect(paneSlots).toEqual(['sidebar.right.pane.tab'])
+    // The body seat, then the chip title that carries the tab's glyph.
+    expect(paneSlots).toEqual(['sidebar.right.pane.tab', 'sidebar.right.pane.tab.title'])
   })
 })

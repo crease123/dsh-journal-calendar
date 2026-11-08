@@ -14,7 +14,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { en, zh } from '../src/client/locales.ts'
+import { en, tagLabels, zh } from '../src/client/locales.ts'
 import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
 import type { CalendarCardProps, CalendarLabels, DutyPopoverProps, SearchPanelProps } from '../src/client/CalendarCard.tsx'
 import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../src/types.ts'
@@ -48,6 +48,7 @@ function labelsOf(dictionary: Record<string, string>): CalendarLabels {
     searchPlaceholder: dictionary['searchPlaceholder'] ?? '',
     searchEmpty: dictionary['searchEmpty'] ?? '',
     searchClose: dictionary['searchClose'] ?? '',
+    tags: tagLabels(dictionary['tagLabels'] ?? ''),
   }
 }
 
@@ -273,14 +274,22 @@ describe('SearchPanel render', () => {
     expect(html).toContain(`>${escaped(labelsOf(en).memory)}</span>`)
   })
 
-  it('shows the tags a hit may have matched, so the row explains itself', () => {
-    const html = render(labelsOf(en), 'research', [
-      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: 'read a paper', tags: ['research', '论文'] }),
+  it('shows the tag a hit may have matched, so the row explains itself', () => {
+    const html = render(labelsOf(en), 'study', [
+      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: 'read a paper', tag: 'study' }),
     ])
 
     expect(html).toContain('read a paper')
-    expect(html).toContain('research</em>')
-    expect(html).toContain('论文</em>')
+    expect(html).toContain('Study</em>')
+  })
+
+  it('leaves an entry with no tag as a bare row', () => {
+    const html = render(labelsOf(zh), '搜索', [
+      hit('2026-09-03', { id: 'm1', kind: 'memory', time: '09:12', title: '没有标签的条目' }),
+    ])
+
+    expect(html).toContain('没有标签的条目')
+    expect(html).not.toContain('<em')
   })
 
   it('says nothing matches instead of leaving the list blank', () => {

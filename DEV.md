@@ -26,11 +26,12 @@ pnpm build       # stage-typert → tsc(host/client) → tsdown ×2
 
 改完 `src/` 后：`pnpm build` → 重启 app（或 `dev_reload_package dsh-journal-calendar`）→ 刷新页面。
 
-## 两个已知的坑
+## 三个已知的坑
 
 1. **改了 Remote 面（`service.ts` 的 `@Remote` 方法）或重新生成了 typert 产物后，必须重启宿主。**
    热重载只撤下旧登记、不补新登记，会报 `typert gateway: journal/day: its strict definition was withdrawn and SRC fallback is forbidden`，日历变空。README 的「重新生成 Remote 产物后要重启宿主」一节有原文。
 2. **`scripts/*.mjs` 不能写 TS 类型标注**，否则报 `SyntaxError: Unexpected token ':'`。
+3. **`@deepseek-ai/dsh-*` 的 devDependencies 必须与实际运行的 DSH 同线**（当前 `0.2.2-rc.1`）。生成器现在会 import `@deepseek-ai/dsh-typert-protocol/remote-info`，同步它是构建能过的最低要求；早期协议没有这个导出，所以 `peerDependencies` 与 `engines.dsh` 也从 `0.2.2-rc.1` 起算。反过来，checkout 里的生成器也要与这条线一致，否则产物可能与运行时协议对不上。
 
 ## 重新生成 typert 产物
 
@@ -38,11 +39,12 @@ pnpm build       # stage-typert → tsc(host/client) → tsdown ×2
 DSH_CHECKOUT=/Users/lw/code/create/agents/deepseek-harness pnpm run regen-typert
 ```
 
-脚本会把 `src/` 自搭成临时包（`packages/experimental/journal`）注入 checkout，跑 `WorkspaceTypertGenerator`，把身份改回 `dsh-journal-calendar` 后写入 `generated/`，并逐字节还原 checkout。生成后重新 `pnpm build` 并**重启宿主**。
+脚本用 checkout 里（`/Users/lw/code/create/agents/deepseek-harness`）的生成器；它会把 `src/` 自搭成临时包（`packages/experimental/journal`）注入 checkout，跑 `WorkspaceTypertGenerator`，把身份改回 `dsh-journal-calendar` 后写入 `generated/`，并逐字节还原 checkout。生成后重新 `pnpm build` 并**重启宿主**。
 
 ## 数据与职责文案
 
 - 日记数据：`~/.dsh/journal/<YYYY-MM-DD>.json`（`version: 1`）
+- 标签：`tag` 是五个固定值之一（`work`/`study`/`life`/`health`/`other`），卡片画成中英 chip；旧文件里的自由 `tags` 数组读回时折算成一个（对不上的一律 `other`）
 - 职责文案：`~/.dsh/journal/duty.md`（不存在或空白 = 内置默认句；上限 2000 字符；也可在日历卡片的 ✎ 浮层里编辑）
 - `duty.md` 每组装一次系统提示词就同步读一次，改完下一条消息即生效
 

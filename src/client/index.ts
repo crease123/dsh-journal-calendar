@@ -17,7 +17,8 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import { CalendarCard, type CalendarInjected } from './CalendarCard.tsx'
-import { en, zh } from './locales.ts'
+import { TabTitle } from './TabTitle.tsx'
+import { en, tagLabels, zh } from './locales.ts'
 import { revealTurn } from './reveal.ts'
 import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../types.ts'
 
@@ -101,6 +102,7 @@ export function apply(ctx: ClientContext): void {
         dutySave: t('dutySave'),
         dutyHint: t('dutyHint'),
         dutyEmptyHint: t('dutyEmptyHint'),
+        tags: tagLabels(t('tagLabels')),
         openSource: t('openSource'),
         search: t('search'),
         searchPlaceholder: t('searchPlaceholder'),
@@ -143,4 +145,11 @@ export function apply(ctx: ClientContext): void {
       },
     }),
   }, CalendarCard)), 'journal.body')
+
+  // The chip's own title: the tab type has no icon field, so the glyph rides
+  // with the title this seat dispatches. Keyed by the type id the chip looks up.
+  ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab.title',
+    key: ID,
+  }, TabTitle)), 'journal.tab-title')
 }

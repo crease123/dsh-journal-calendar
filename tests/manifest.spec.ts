@@ -4,10 +4,9 @@
  * node-semver only lets a prerelease version satisfy a range when some
  * comparator in that range shares the version's exact `major.minor.patch` tuple
  * and itself carries a prerelease tag. So a broad-looking
- * `>=0.1.7-rc.1 <0.3.0` silently excludes `0.2.0-rc.2`: neither comparator sits
- * on the `0.2.0` tuple, pnpm only warns, and the install resolves to something
- * neither side intended. The ranges therefore name each supported release line
- * explicitly.
+ * `>=0.2.2-rc.1 <0.3.0` silently excludes `0.2.3-rc.1`: neither comparator sits
+ * on the `0.2.3` tuple, pnpm only warns, and the install resolves to something
+ * neither side intended.
  *
  * This test pins the ranges to the versions an acceptance run actually exercised,
  * so widening the code's verified reach without widening the range — or the
@@ -24,10 +23,14 @@ const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.
 }
 
 /** DSH versions this package has been installed and booted against. */
-const VERIFIED = ['0.1.7-rc.1', '0.1.7-rc.2', '0.2.0-rc.1', '0.2.0-rc.2']
+const VERIFIED = ['0.2.2-rc.1']
 
-/** DSH versions outside the supported release lines. */
-const UNVERIFIED = ['0.1.6-alpha.2', '0.3.0-rc.1']
+/**
+ * Versions outside the supported line. `0.2.1` matters most: the generated
+ * Remote contribution imports `@deepseek-ai/dsh-typert-protocol/remote-info`,
+ * which earlier protocols do not export.
+ */
+const UNVERIFIED = ['0.1.6-alpha.2', '0.2.0-rc.2', '0.2.1-rc.5', '0.3.0-rc.1']
 
 /** Every range whose job is to describe which DSH builds this package runs on. */
 const ranges: [string, string][] = [

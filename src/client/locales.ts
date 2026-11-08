@@ -8,6 +8,7 @@
  */
 
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
+import type { JournalTag } from '../types.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -36,6 +37,7 @@ export type CalendarKey =
   | 'searchPlaceholder'
   | 'searchEmpty'
   | 'searchClose'
+  | 'tagLabels'
 
 /**
  * English dictionary.
@@ -63,6 +65,7 @@ export const en: Record<CalendarKey, string> = {
   searchPlaceholder: 'Search titles and tags',
   searchEmpty: 'Nothing matches.',
   searchClose: 'Close search',
+  tagLabels: 'Work,Study,Life,Health,Other',
 }
 
 /** Chinese dictionary. */
@@ -85,4 +88,16 @@ export const zh: Record<CalendarKey, string> = {
   searchPlaceholder: '搜索标题与标签',
   searchEmpty: '没有匹配的条目。',
   searchClose: '关闭搜索',
+  tagLabels: '工作,学习,生活,健康,其他',
+}
+
+/**
+ * The five chip labels, keyed by tag id.
+ * @param text - the dictionary's `tagLabels`, comma-joined in the tag order the
+ * service declares; the card never sees the raw string.
+ * @returns one label per tag id.
+ */
+export function tagLabels(text: string): Record<JournalTag, string> {
+  const [work = 'work', study = 'study', life = 'life', health = 'health', other = 'other'] = text.split(',')
+  return { work, study, life, health, other }
 }

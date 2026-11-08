@@ -18,6 +18,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type { Journal } from './service.ts'
+import { JOURNAL_TAGS } from './types.ts'
 
 /**
  * The service this capability writes through.
@@ -78,10 +79,11 @@ export function registerJournalTool(ctx: Context, directory: string): void {
         required: true,
         description: 'One-line summary — the line shown in the day list.',
       },
-      tags: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Optional 1–3 short tags, rendered as chips in the calendar card.',
+      tag: {
+        type: 'string',
+        required: true,
+        enum: [...JOURNAL_TAGS],
+        description: 'The one tag this entry belongs to. work = building or shipping something (code, plugin, release, deliverable); study = reading, research, papers, courses, experiments; life = daily living: errands, travel, food, exercise, family, media; health = symptoms, medical questions and care; other = none of those fits.',
       },
       date: {
         type: 'string',
@@ -115,7 +117,7 @@ export function registerJournalTool(ctx: Context, directory: string): void {
       const entry = await journal.record({
         title: args.title,
         kind: args.kind,
-        ...args.tags === undefined ? {} : { tags: args.tags },
+        tag: args.tag,
         ...args.date === undefined ? {} : { date: args.date },
         ...args.time === undefined ? {} : { time: args.time },
         // The calling agent identifies the conversation the memory came from.

@@ -13,7 +13,9 @@ import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { remoteErrorOf } from '@deepseek-ai/dsh-typert-protocol'
 import { afterEach, describe, expect, it } from 'vitest'
-import { Journal, DEFAULT_DUTY, DUTY_LIMIT, SEARCH_LIMIT, resolveJournalDirectory } from '../src/service.ts'
+import { Journal, DEFAULT_DUTY, DUTY_LIMIT, SEARCH_LIMIT, TAG_WORDS, resolveJournalDirectory } from '../src/service.ts'
+import { en, tagLabels, zh } from '../src/client/locales.ts'
+import { JOURNAL_TAGS } from '../src/types.ts'
 
 const directories: string[] = []
 const contexts: Context[] = []
@@ -146,6 +148,25 @@ describe('readDay()', () => {
     }), 'utf8')
 
     await expect(codeOf(journal.readDay('2026-03-04'))).resolves.toBe('journal/malformed')
+  })
+
+  it('reads the free-form tags of an older file as one tag', async () => {
+    const { journal, dir } = await mounted()
+    await writeFile(join(dir, '2026-03-04.json'), JSON.stringify({
+      version: 1,
+      date: '2026-03-04',
+      entries: [
+        { id: 'a', time: '09:00', title: 'named a label', tags: ['论文', '精读'] },
+        { id: 'b', time: '10:00', title: 'named a language', tags: ['学习'] },
+        { id: 'c', time: '11:00', title: 'named nothing we know', tags: ['某个旧标签'] },
+        { id: 'd', time: '12:00', title: 'carried no tags' },
+      ],
+    }), 'utf8')
+
+    const day = await journal.readDay('2026-03-04')
+    // A label that names a tag still maps; anything else lands in `other`, and an
+    // entry without labels gains none.
+    expect(day.entries.map(entry => entry.tag)).toEqual(['other', 'study', 'other', undefined])
   })
 
   it('treats a pre-kinds entry as a memory', async () => {
@@ -311,6 +332,20 @@ describe('record() citation', () => {
   })
 })
 
+describe('TAG_WORDS', () => {
+  it('mirrors the chip copy both dictionaries ship, so search finds what the card shows', () => {
+    for (const dictionary of [en, zh]) {
+      const labels = tagLabels(dictionary['tagLabels'] ?? '')
+      for (const tag of JOURNAL_TAGS) {
+        // Every chip label is searchable in every language the card can render;
+        // search lowercases both sides, so capitalisation is not compared here.
+        const searchable = TAG_WORDS[tag].map(word => word.toLowerCase())
+        expect(searchable).toContain(labels[tag].toLowerCase())
+      }
+    }
+  })
+})
+
 describe('search()', () => {
   it('finds a word in a title and reports the day it lives in, newest day first', async () => {
     const { journal } = await mounted()
@@ -327,9 +362,11 @@ describe('search()', () => {
   it('matches a tag as well as a title, and nothing the card does not draw', async () => {
     const { journal } = await mounted()
     await journal.record({ title: 'talked with the team', date: '2026-03-04' })
-    await journal.record({ title: 'read a paper', date: '2026-03-05', tags: ['research'] })
+    await journal.record({ title: 'read a paper', date: '2026-03-05', tag: 'study' })
 
-    await expect(journal.search('RESEARCH')).resolves.toMatchObject([{ entry: { title: 'read a paper' } }])
+    // The chip is drawn in the reader's language, so both languages find the entry.
+    await expect(journal.search('STUDY')).resolves.toMatchObject([{ entry: { title: 'read a paper' } }])
+    await expect(journal.search('学习')).resolves.toMatchObject([{ entry: { title: 'read a paper' } }])
     // Neither a kind name nor a time is drawn as text, so neither is searchable.
     await expect(journal.search('memory')).resolves.toEqual([])
     await expect(journal.search('2026-03-04')).resolves.toEqual([])

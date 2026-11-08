@@ -79,7 +79,13 @@ The service treats a file it cannot parse as a hard error rather than rebuilding
 
 ## What the agent does with it
 
-The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, and optionally `tags`, `date`, and `time`.
+The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, one `tag`, and optionally `date` and `time`.
+
+### The five tags
+
+`tag` is one of five fixed values — `work`, `study`, `life`, `health`, `other` — and the card draws it as a chip: 工作, 学习, 生活, 健康, 其他 in Chinese, Work…Other in English. A closed set is what keeps the journal scannable: with free-form labels it drifted to 342 distinct tags over 227 entries, and every extra one made the chips harder to read. The tool lists the five with what each covers, so the agent can pick one without guessing.
+
+Day files written before this change carry free-form `tags` arrays. They are read back as one tag: a label that names one of the five maps to it, anything else becomes `other`, and an entry with no labels keeps none. No file has to be rewritten for the card to work.
 
 Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
 
@@ -89,7 +95,7 @@ An entry recorded from a conversation also stores that Session and the turn it c
 
 ### Searching the journal
 
-The magnifier button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title and tags, case-insensitively and newest day first — only what the card draws, so every hit is something you can see; each hit carries its kind, day, and tags. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
+The magnifier button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title and tag, case-insensitively and newest day first — only what the card draws, so every hit is something you can see; each hit carries its kind, day, and tag. A tag matches by the word the chip shows, in either language, so `工作` and `work` find the same entries. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
 
 ### Editing the duty sentence
 
@@ -131,11 +137,13 @@ Leave it. The browser module table fetches that file's bytes and materializes it
 
 ## Compatibility
 
-Declared through `peerDependencies` and `engines.dsh`. Verified end to end against DSH `0.1.7-rc.1` and `0.2.0-rc.2`: install, boot, bundle delivery, and the `month` / `day` / `setDone` endpoints reading and writing real day files.
+Declared through `peerDependencies` and `engines.dsh`. Verified end to end against DSH `0.2.2-rc.1`: install, boot, bundle delivery, and the `month` / `day` / `setDone` endpoints reading and writing real day files.
+
+The line starts there because the generated Remote contribution imports `@deepseek-ai/dsh-typert-protocol/remote-info`, which protocols before `0.2.1-rc.2` do not export. Older DSH builds are refused at install time rather than failing on the first call.
 
 On Node `22.19.0` and `26.4.0`, the same acceptance run passes and the host artifacts load. Node `24` and `25` sit between two verified versions; `engines.node` names the two release lines DSH itself supports.
 
-Every DSH range names each supported release line explicitly, for example `>=0.1.7-rc.1 <0.2.0 || >=0.2.0-rc.1 <0.3.0-0`. This is not decoration: node-semver only lets a prerelease version satisfy a range when a comparator in that range shares the version's exact `major.minor.patch` tuple *and* carries a prerelease tag itself. A broad-looking `>=0.1.7-rc.1 <0.3.0` silently excludes `0.2.0-rc.2` — pnpm only warns, and the install resolves to something neither side intended. `tests/manifest.spec.ts` pins the ranges to the versions an acceptance run exercised.
+Every DSH range names each supported release line explicitly, for example `>=0.2.2-rc.1 <0.3.0-0`. This is not decoration: node-semver only lets a prerelease version satisfy a range when a comparator in that range shares the version's exact `major.minor.patch` tuple *and* carries a prerelease tag itself. A broad-looking `>=0.2.2-rc.1 <0.3.0` silently excludes `0.2.3-rc.1` — pnpm only warns, and the install resolves to something neither side intended. `tests/manifest.spec.ts` pins the ranges to the versions an acceptance run exercised.
 
 DSH reads these ranges at install time and refuses an incompatible plugin, restoring the profile manifest — verified by installing a deliberately-incompatible copy and watching it rejected. But DSH evaluates them with `includePrerelease`, so a range too broad for your package manager still passes there. That asymmetry is exactly why the ranges are pinned by a test instead of eyeballed.
 

@@ -236,11 +236,6 @@
   border-top: 0.5px solid var(--dsw-alias-border-l3);
 }
 
-.dayTitle {
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
 .section {
   margin: 8px 0 4px;
   color: var(--dsw-alias-label-tertiary);

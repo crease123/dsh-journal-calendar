@@ -1,0 +1,11 @@
+/* The chip row already spaces items; the glyph must not shrink with the title. */
+.icon {
+  flex: none;
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

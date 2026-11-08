@@ -35,7 +35,9 @@ import type {
   JournalEntryKind,
   JournalMonthDay,
   JournalSearchHit,
+  JournalTag,
 } from './types.ts'
+import { JOURNAL_TAGS } from './types.ts'
 
 export type * from './types.ts'
 
@@ -44,6 +46,29 @@ declare module '@deepseek-ai/cordis' {
     /** Host owner of the `journal` Remote namespace. */
     journal: Journal
   }
+}
+
+/**
+ * Words a tag is searchable by, in both languages `tagLabels` ships copy for.
+ * The dictionary owns the chip text; this mirrors it so a query typed in either
+ * language finds the same entries. `tests/service.spec.ts` holds them together.
+ */
+export const TAG_WORDS: Record<JournalTag, readonly string[]> = {
+  work: ['work', '工作'],
+  study: ['study', '学习'],
+  life: ['life', '生活'],
+  health: ['health', '健康'],
+  other: ['other', '其他'],
+}
+
+/**
+ * Files written before tags were a closed set carry free-form labels in a `tags`
+ * array. A label that names a tag still maps to it; anything else becomes
+ * `other` rather than failing the whole day.
+ */
+const LEGACY_LABELS: Record<string, JournalTag> = {
+  work: 'work', study: 'study', life: 'life', health: 'health', other: 'other',
+  工作: 'work', 学习: 'study', 生活: 'life', 健康: 'health', 其他: 'other',
 }
 
 /** `YYYY-MM-DD`: the only date shape accepted, so no other string reaches `join()`. */
@@ -134,7 +159,7 @@ function parseDay(raw: string, path: string): JournalDay {
       kind,
       time: item['time'] as string,
       title: item['title'] as string,
-      ...Array.isArray(item['tags']) ? { tags: item['tags'] as string[] } : {},
+      ...legacyTag(item),
       ...typeof item['done'] === 'boolean' ? { done: item['done'] } : {},
       ...typeof item['sessionId'] === 'string' ? { sessionId: item['sessionId'] } : {},
       ...typeof item['turn'] === 'number' ? { turn: item['turn'] } : {},
@@ -142,6 +167,28 @@ function parseDay(raw: string, path: string): JournalDay {
     }
   })
   return { version: 1, date, entries }
+}
+
+/** Whether a stored string names a tag of the closed set. */
+function isTag(value: unknown): value is JournalTag {
+  return typeof value === 'string' && JOURNAL_TAGS.some(tag => tag === value)
+}
+
+/**
+ * Read the tag out of an entry, accepting both shapes a file can carry.
+ * @param item - one raw entry object.
+ * @returns `tag` when the entry names one, otherwise the legacy array's best match.
+ */
+function legacyTag(item: Record<string, unknown>): { tag?: JournalTag } {
+  if (isTag(item['tag'])) return { tag: item['tag'] }
+  const labels = item['tags']
+  if (!Array.isArray(labels) || labels.length === 0) return {}
+  for (const label of labels) {
+    if (typeof label !== 'string') continue
+    const mapped = LEGACY_LABELS[label.trim().toLowerCase()]
+    if (mapped !== undefined) return { tag: mapped }
+  }
+  return { tag: 'other' }
 }
 
 /**
@@ -165,8 +212,9 @@ export function resolveJournalDirectory(config: Config = {}): string {
  * @returns true when the title or a tag contains the needle.
  */
 function matchesQuery(entry: JournalEntry, needle: string): boolean {
-  // Only what the card draws is searchable: the title and the tag chips.
-  const haystack = [entry.title, ...entry.tags ?? []].join('\n').toLowerCase()
+  // Only what the card draws is searchable: the title and the tag chip.
+  const tagWords = entry.tag === undefined ? [] : TAG_WORDS[entry.tag]
+  const haystack = [entry.title, ...tagWords].join('\n').toLowerCase()
   return haystack.includes(needle)
 }
 
@@ -227,12 +275,13 @@ export class Journal extends TypertRemoteService {
     const position = input.turn === undefined
       ? input.sessionId === undefined ? undefined : this.positions.get(input.sessionId)
       : { turn: input.turn, step: input.step ?? 0 }
+    const tag = input.tag
     const entry: JournalEntry = {
       id: input.id ?? randomUUID(),
       kind,
       time: input.time ?? localTime(),
       title: input.title.trim(),
-      ...input.tags === undefined || input.tags.length === 0 ? {} : { tags: [...input.tags] },
+      ...tag === undefined ? {} : { tag },
       // A todo always carries its flag; the card's checkbox reads exactly this.
       ...kind === 'todo' ? { done: false } : {},
       ...input.sessionId === undefined ? {} : { sessionId: input.sessionId },

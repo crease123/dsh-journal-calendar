@@ -13,6 +13,7 @@
     "src/client/CalendarCard.tsx",
     "src/client/locales.ts",
     "src/client/reveal.ts",
+    "src/client/TabTitle.tsx",
     "src/css-modules.d.ts",
     "src/types.ts"
   ]
