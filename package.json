@@ -1,6 +1,6 @@
 {
   "name": "dsh-journal-calendar",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Daily journal and calendar for DeepSeek Harness: the journal_record tool appends one JSON file per day, and the right sidebar draws it as a calendar.",
   "type": "module",
   "license": "MIT",
