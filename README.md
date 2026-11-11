@@ -2,7 +2,49 @@
 
 English | [中文](README.zh.md)
 
-A daily journal and calendar for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). The agent records what you did and what you intend to do into one JSON file per day, and the Web UI draws those files as a calendar in the right sidebar.
+A daily journal the agent keeps on its own, for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). One sentence it adds to the system prompt makes recording part of the agent's job, so it writes what you did and what you intend to do into one JSON file per day, and the Web UI draws those files as a calendar in the right sidebar.
+
+![The journal card in the right sidebar: a month grid whose cells are marked by open todos, finished todos or memories, and below it the selected day's todos and memories, each carrying a colour-coded tag chip.](assets/screenshots/calendar.webp)
+
+## What it does
+
+The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, one `tag`, and optionally `date` and `time`. Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
+
+Everything the agent writes lands on its day in the card, and everything in the card can be driven from the card: the duty sentence is editable there, days are marked by what they hold, entries are searchable, and a memory links back to the conversation that recorded it.
+
+### The duty sentence
+
+The sentence is what makes the recording proactive rather than something you have to ask for. Its default is:
+
+> Recording what the user has done and what the user intends to do in the journal is one of your duties.
+
+It is one prompt section, registered with the tool and gated on the tool's presence, so a profile that removes the tool loses the instruction with it.
+
+That sentence is yours to rewrite. The ✎ button beside the month heading opens a small editor prefilled with the text now in effect; the button turns into ✓ once the draft differs from what is in effect, and committing it saves. Escape, a click outside the editor, or a second ✎ discards the draft. The text lands in `$DSH_HOME/journal/duty.md` (beside the day files, following `dir`), and the **next message** already carries it — the section is re-read on every prompt assembly, so no reload is involved. Saving an empty editor deletes the file and restores the built-in sentence. The limit is 2000 characters, and the text is inserted verbatim, so a `{{` in it is your own writing rather than a variable reference. That is the lever for how eagerly the agent records, and what it considers worth recording.
+
+![The duty editor open over the calendar: a textarea holding the current sentence, with the hint "Edit system prompt" below it.](assets/screenshots/duty-editor.webp)
+
+### The five tags
+
+`tag` is one of five fixed values — `work`, `study`, `life`, `health`, `other` — and the card draws it as a chip: 工作, 学习, 生活, 健康, 其他 in Chinese, Work…Other in English. A closed set is what keeps the journal scannable: with free-form labels it drifted to 342 distinct tags over 227 entries, and every extra one made the chips harder to read. The tool lists the five with what each covers, so the agent can pick one without guessing.
+
+The chip is tinted with its tag's hue — blue for work, violet for study, amber for life, green for health, grey for other — and the same chip appears on a todo row beside the title, so both sections read at one glance. The tint is mixed against the theme's label colour, so the five hues stay legible in the light and the dark surface alike.
+
+Day files written before this change carry free-form `tags` arrays. They are read back as one tag: a label that names one of the five maps to it, anything else becomes `other`, and an entry with no labels keeps none. No file has to be rewritten for the card to work.
+
+### Searching the journal
+
+The magnifier button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title and tag, case-insensitively and newest day first — only what the card draws, so every hit is something you can see; each hit carries its kind, day, and tag. A tag matches by the word the chip shows, in either language, so `工作` and `work` find the same entries. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
+
+![Searching the journal from the month header: hits listed newest first, each with its kind, day and tag chip.](assets/screenshots/search.webp)
+
+### Jumping back to the conversation
+
+An entry recorded from a conversation also stores that Session and the turn it came from, so a memory in the card is a link: clicking one switches to the conversation and scrolls to the turn the entry was recorded in, with a brief highlight. Entries written outside a conversation (hand-edited files, or anything recorded before this existed) carry no source and stay plain text. The scroll addresses turns through the Web client's `data-chat-turn` attribute; if a future client stops publishing it, the click still opens the conversation and simply does not scroll.
+
+### The guide inside the card
+
+The `?` in the month header opens the card's own guide: what gets recorded, the five tags, what each day marker means, checking a todo off, search, the jump back to a conversation, and the duty sentence. It is copy in the same locale dictionaries as the rest of the card, so it follows the interface language and ships no separate page. Clicking the blur, the ✕, or pressing Escape closes it, and opening it replaces whichever of search or the duty editor was open.
 
 ## What it contributes
 
@@ -77,32 +119,6 @@ Point it somewhere else by giving the row a `dir`:
 
 The service treats a file it cannot parse as a hard error rather than rebuilding it, because silently rewriting a day would destroy the record it holds.
 
-## What the agent does with it
-
-The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, one `tag`, and optionally `date` and `time`.
-
-### The five tags
-
-`tag` is one of five fixed values — `work`, `study`, `life`, `health`, `other` — and the card draws it as a chip: 工作, 学习, 生活, 健康, 其他 in Chinese, Work…Other in English. A closed set is what keeps the journal scannable: with free-form labels it drifted to 342 distinct tags over 227 entries, and every extra one made the chips harder to read. The tool lists the five with what each covers, so the agent can pick one without guessing.
-
-The chip is tinted with its tag's hue — blue for work, violet for study, amber for life, green for health, grey for other — and the same chip appears on a todo row beside the title, so both sections read at one glance. The tint is mixed against the theme's label colour, so the five hues stay legible in the light and the dark surface alike.
-
-Day files written before this change carry free-form `tags` arrays. They are read back as one tag: a label that names one of the five maps to it, anything else becomes `other`, and an entry with no labels keeps none. No file has to be rewritten for the card to work.
-
-Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
-
-### Jumping back to the conversation
-
-An entry recorded from a conversation also stores that Session and the turn it came from, so a memory in the card is a link: clicking one switches to the conversation and scrolls to the turn the entry was recorded in, with a brief highlight. Entries written outside a conversation (hand-edited files, or anything recorded before this existed) carry no source and stay plain text. The scroll addresses turns through the Web client's `data-chat-turn` attribute; if a future client stops publishing it, the click still opens the conversation and simply does not scroll.
-
-### Searching the journal
-
-The magnifier button beside the month heading turns the lower half of the card into a keyword search. It matches every stored entry, memories and todos alike, on title and tag, case-insensitively and newest day first — only what the card draws, so every hit is something you can see; each hit carries its kind, day, and tag. A tag matches by the word the chip shows, in either language, so `工作` and `work` find the same entries. Picking a hit switches the calendar to that day, closes the search, and flashes the entry in the day list. One query stops at 100 hits, so a search cannot stream the whole journal into the sidebar. The scan runs in the Host over the same day files the card already reads; nothing is indexed ahead of time.
-
-### Editing the duty sentence
-
-That prompt sentence is yours to rewrite. The calendar card carries a ✎ button beside the month heading: it opens an inline editor prefilled with the text now in effect, with Save, Reset, and Cancel. The text lands in `$DSH_HOME/journal/duty.md` (beside the day files, following `dir`), and the **next message** already carries it — the section is re-read on every prompt assembly, with no reload. Clearing the editor and saving removes the file and restores the built-in sentence. The limit is 2000 characters; the text is inserted verbatim, so `{{` in it is your own writing, not a variable reference.
-
 ## Development
 
 ```sh
@@ -170,11 +186,11 @@ name: crease123/dsh-journal-calendar
 category: memory
 tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
 description:
-  en: 'A daily journal the agent keeps for you. The journal_record tool appends entries to one JSON file per day under the DSH home, carrying the agent''s own record of what you did and what you intend to do; the right sidebar draws those files as a month calendar whose cells are marked by open todos, finished todos, or memories, with checkable todos and the selected day''s notes below. Entries are plain files you own and can edit.'
-  zh: '助手替你维护的每日日志。journal_record 工具把条目追加到 DSH home 下一天一个的 JSON 文件里，记的是助手所见的「你做了什么、打算做什么」；右侧栏把这些文件画成月历，单元格按「有待办未完成 / 待办已完成 / 只有记事」三种状态标记，下方是可勾选的待办与所选日期的记事。条目是纯文件，归你所有，可直接编辑。'
+  en: "A journal the agent keeps on its own: one sentence injected into the system prompt makes recording one of its duties, so it notes what you have done and what you intend to do, and each dated todo or memory lands on its day in the right sidebar's month calendar, marked per day by open todos, finished todos or memories; that injected sentence is editable from the calendar itself, letting you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) as a colour-coded chip, todos are checkable, all entries are searchable by title and tag, and clicking a memory opens the session that recorded it and scrolls to that turn; the journal_record tool writes one JSON file per day under the DSH home."
+  zh: '助手主动替你维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是每条带时间的待办或记事都会落到右侧栏月历上对应的那一天，单元格按「有待办未完成 / 待办已完成 / 只有记事」标记；这句话可以直接在日历上改写，用来调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可勾选，全部记录可按标题与标签搜索，点击一条记忆会打开记录它的那次会话并滚动到对应轮次；条目由 journal_record 工具写入 DSH home 下一天一个的 JSON 文件。'
 ```
 
-The description is long on purpose: the registry already lists `AloneFu/dsh-calendar-plugin`, which also draws a month grid with per-day markers in the sidebar. The difference is what the entries are and who writes them — that plugin views an existing Obsidian vault, while this one has the agent maintain its own day files under the DSH home. A registry reviewer checks an entry against the plugin, and asks whether an existing entry already covers it, so the line has to carry that distinction.
+The description leads with what the plugin does rather than how it stores it, because the registry already lists `AloneFu/dsh-calendar-plugin`, which also draws a month grid with per-day markers in the sidebar. The difference is what the entries are and who writes them — that plugin views an existing Obsidian vault, while this one has the agent maintain its own day files under the DSH home. A registry reviewer checks an entry against the plugin, and asks whether an existing entry already covers it, so the line has to carry that distinction. Screenshots are declared separately, in this repository's `screenshots.json`, so they can change without another registry pull request.
 
 The registry's `url` must match the repository exactly, and the repository must carry the `dsh-plugin` GitHub topic and be at least one day old. The published package's `repository` field points at the same URL, which is what links the two.
 

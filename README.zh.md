@@ -2,7 +2,49 @@
 
 [English](README.md) | 中文
 
-给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）用的每日日志与日历。Agent 把"你做了什么、你打算做什么"记成一天一个 JSON 文件，Web UI 把这些文件画成右侧栏里的日历。
+给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）用的每日日志与日历，由助手主动维护。它往系统提示词里加一句话，把「记录」变成助手的职责之一，于是「你做了什么、你打算做什么」会被写进一天一个的 JSON 文件，Web UI 再把这些文件画成右侧栏里的日历。
+
+![右侧栏里的日历卡片：月历网格按「有待办未完成 / 待办已完成 / 只有记事」标记每一天，下方是所选日期的待办与记事，每条都带一枚彩色标签 chip。](assets/screenshots/calendar.webp)
+
+## 它做什么
+
+插件注册 `journal_record` 工具，外加一句提示词，告诉 agent 记录是它的职责之一。工具参数：`kind`（`todo` = 打算做的事，可勾选；`memory` = 已经发生的事）、单行 `title`、一个 `tag`，以及可选的 `date`、`time`。同一个 `id` 记两次会返回已存在的那条，而不会追加第二条，所以工具调用重试是安全的。
+
+助手写下的每条记录都会落到卡片上对应的那一天，而卡片上的东西也都能从卡片上操作：那句职责提示词可以直接改，日期按内容标记，条目可搜索，一条记忆还能跳回记录它的那次对话。
+
+### 那句职责提示词
+
+它正是「主动记忆」的来源——有了这句话，记录才是助手自己会做的事，而不是等你开口要求。内置的默认句是：
+
+> Recording what the user has done and what the user intends to do in the journal is one of your duties.
+
+它是一段独立的提示词 section，随工具一起注册，并以工具是否存在为开关：把工具从 profile 里去掉，这段指令也跟着消失。
+
+那句话归你写。月份标题旁的 ✎ 按钮会打开一个小编辑器，预填当前生效的文本；草稿与生效文本不同时，按钮变成 ✓，点它就保存。按 Escape、点编辑器外面、或者再点一次 ✎，都会放弃草稿。文本落在 `$DSH_HOME/journal/duty.md`（与每日记录同目录，跟随 `dir`），**下一条消息**就生效——提示词组装时每次重读这个文件，不涉及任何重载。清空后保存会删掉文件、恢复内置句子。上限 2000 字符；文本原样插入，其中的 `{{` 是你自己的文字，不是变量引用。想调整助手记得多主动、什么值得记，调的就是这一句。
+
+![职责编辑器浮在日历之上：文本框里是当前生效的那句话，下面一行小字「编辑系统提示词」。](assets/screenshots/duty-editor.webp)
+
+### 五个标签
+
+`tag` 只能是五个固定值之一——`work`、`study`、`life`、`health`、`other`，卡片把它画成一枚 chip：中文「工作 / 学习 / 生活 / 健康 / 其他」，英文「Work … Other」。之所以收成封闭集合，是因为日历的价值在于扫一眼就能看懂：用自由标签时，227 条条目里长出了 342 种标签，每多一种，chip 就更难读。工具描述里写清了五个值各自覆盖什么，agent 不用猜。
+
+chip 会带上标签自己的色相——工作是蓝、学习是紫、生活是琥珀、健康是绿、其他是灰——待办行在标题右侧也挂同一枚 chip，两节扫一眼就能分开。底色与文字都跟主题前景色混合，浅色和深色主题下都保持可读。
+
+这次改动之前的日文件里存的是自由 `tags` 数组。读回来时会折算成一个标签：能对应上某个标签的写法直接映射，其余一律记为 `other`，本来就没有标签的条目保持没有。卡片要正常工作，不需要改写任何文件。
+
+### 搜索条目
+
+月份标题旁的放大镜按钮会把卡片下半部分变成关键字搜索。它匹配所有条目（memory 与 todo 一视同仁）的标题与标签，不区分大小写，按日期从新到旧排列——只搜卡片画得出来的东西，所以每条结果都看得见；每条结果都标着自己的类型、日期与标签。标签按 chip 上显示的那个词匹配，两种语言都认，所以「工作」和 `work` 会搜到同一批条目。点一条结果，日历会切到那一天、收起搜索，并在当天列表里短暂高亮这条记录。单次搜索最多返回 100 条，所以一次搜索不会把整本日志灌进侧栏。扫描在 Host 上进行，读的就是卡片本来就在读的那些日文件，没有预先建索引。
+
+![从月份标题发起搜索：结果按日期从新到旧排列，每条带类型、日期与标签 chip。](assets/screenshots/search.webp)
+
+### 跳回对话
+
+在对话里记录的条目会同时记下所属 Session 和轮次，因此卡片里的每条 memory 都是一个链接：点一下会切到那次对话，滚到记录这条时所在的那一轮，并短暂高亮。手改 JSON 写进去的、以及这个功能上线前的老条目没有来源，保持纯文本。滚动靠 Web 客户端的 `data-chat-turn` 属性定位；将来客户端不再输出这个属性时，点击仍然会打开那次对话，只是不再滚动。
+
+### 卡片里的说明
+
+月份标题旁的 `?` 打开卡片自己的说明：记录的是什么、五个标签、日期标记各代表什么、怎么勾选待办、搜索、跳回对话，以及那句职责提示词。文案和卡片其余部分在同一份 locale 字典里，所以跟着界面语言走，也没有单独的页面。点模糊层、点 ✕、按 Escape 都能关掉；打开它会顶掉已经打开的搜索或职责编辑。
 
 ## 它贡献什么
 
@@ -77,32 +119,6 @@ dsh plugin --profile web add git+https://github.com/crease123/dsh-journal-calend
 
 服务把读不懂的文件当成硬错误，而不是重建它——静默重写一天，等于毁掉那天留下的记录。
 
-## Agent 拿它做什么
-
-插件注册 `journal_record` 工具，外加一句提示词，告诉 agent 记录是它的职责之一。工具参数：`kind`（`todo` = 打算做的事，可勾选；`memory` = 已经发生的事）、单行 `title`、一个 `tag`，以及可选的 `date`、`time`。
-
-### 五个标签
-
-`tag` 只能是五个固定值之一——`work`、`study`、`life`、`health`、`other`，卡片把它画成一枚 chip：中文「工作 / 学习 / 生活 / 健康 / 其他」，英文「Work … Other」。之所以收成封闭集合，是因为日历的价值在于扫一眼就能看懂：用自由标签时，227 条条目里长出了 342 种标签，每多一种，chip 就更难读。工具描述里写清了五个值各自覆盖什么，agent 不用猜。
-
-chip 会带上标签自己的色相——工作是蓝、学习是紫、生活是琥珀、健康是绿、其他是灰——待办行在标题右侧也挂同一枚 chip，两节扫一眼就能分开。底色与文字都跟主题前景色混合，浅色和深色主题下都保持可读。
-
-这次改动之前的日文件里存的是自由 `tags` 数组。读回来时会折算成一个标签：能对应上某个标签的写法直接映射，其余一律记为 `other`，本来就没有标签的条目保持没有。卡片要正常工作，不需要改写任何文件。
-
-同一个 `id` 记两次返回已存在的那条，而不会追加第二条，所以工具调用重试是安全的。
-
-### 跳回对话
-
-在对话里记录的条目会同时记下所属 Session 和轮次，因此卡片里的每条 memory 都是一个链接：点一下会切到那次对话，滚到记录这条时所在的那一轮，并短暂高亮。手改 JSON 写进去的、以及这个功能上线前的老条目没有来源，保持纯文本。滚动靠 Web 客户端的 `data-chat-turn` 属性定位；将来客户端不再输出这个属性时，点击仍然会打开那次对话，只是不再滚动。
-
-### 搜索条目
-
-月份标题旁的放大镜按钮会把卡片下半部分变成关键字搜索。它匹配所有条目（memory 与 todo 一视同仁）的标题与标签，不区分大小写，按日期从新到旧排列——只搜卡片画得出来的东西，所以每条结果都看得见；每条结果都标着自己的类型、日期与标签。标签按 chip 上显示的那个词匹配，两种语言都认，所以「工作」和 `work` 会搜到同一批条目。点一条结果，日历会切到那一天、收起搜索，并在当天列表里短暂高亮这条记录。单次搜索最多返回 100 条，所以一次搜索不会把整本日志灌进侧栏。扫描在 Host 上进行，读的就是卡片本来就在读的那些日文件，没有预先建索引。
-
-### 改写那句职责提示词
-
-那句话归你写。日历卡片月份标题旁有一个 ✎ 按钮：点开是内联编辑器，预填当前生效的文本，带保存、恢复默认、取消三个操作。文本落在 `$DSH_HOME/journal/duty.md`（与每日记录同目录，跟随 `dir`），**下一条消息**就生效——提示词组装时每次重读这个文件，无需重载。清空后保存即删除文件、恢复内置句子。上限 2000 字符；文本原样插入，其中的 `{{` 是你自己的文字，不会被当成变量引用。
-
 ## 开发
 
 ```sh
@@ -170,11 +186,11 @@ name: crease123/dsh-journal-calendar
 category: memory
 tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
 description:
-  en: 'A daily journal the agent keeps for you. The journal_record tool appends entries to one JSON file per day under the DSH home, carrying the agent''s own record of what you did and what you intend to do; the right sidebar draws those files as a month calendar whose cells are marked by open todos, finished todos, or memories, with checkable todos and the selected day''s notes below. Entries are plain files you own and can edit.'
-  zh: '助手替你维护的每日日志。journal_record 工具把条目追加到 DSH home 下一天一个的 JSON 文件里，记的是助手所见的「你做了什么、打算做什么」；右侧栏把这些文件画成月历，单元格按「有待办未完成 / 待办已完成 / 只有记事」三种状态标记，下方是可勾选的待办与所选日期的记事。条目是纯文件，归你所有，可直接编辑。'
+  en: "A journal the agent keeps on its own: one sentence injected into the system prompt makes recording one of its duties, so it notes what you have done and what you intend to do, and each dated todo or memory lands on its day in the right sidebar's month calendar, marked per day by open todos, finished todos or memories; that injected sentence is editable from the calendar itself, letting you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) as a colour-coded chip, todos are checkable, all entries are searchable by title and tag, and clicking a memory opens the session that recorded it and scrolls to that turn; the journal_record tool writes one JSON file per day under the DSH home."
+  zh: '助手主动替你维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是每条带时间的待办或记事都会落到右侧栏月历上对应的那一天，单元格按「有待办未完成 / 待办已完成 / 只有记事」标记；这句话可以直接在日历上改写，用来调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可勾选，全部记录可按标题与标签搜索，点击一条记忆会打开记录它的那次会话并滚动到对应轮次；条目由 journal_record 工具写入 DSH home 下一天一个的 JSON 文件。'
 ```
 
-描述写得长是有意的：注册表里已经有 `AloneFu/dsh-calendar-plugin`，同样在右侧栏画带每日标记的月历。区别在于**条目是什么、由谁写**——那个插件是对已有 Obsidian 知识库的视图，这个则是由助手自己维护 DSH home 下的日期文件。注册表评审会把条目和插件代码对照，并检查是否已被现有条目覆盖，所以这一行必须把区别说清楚。
+描述从「插件做了什么」写起，而不是从「数据怎么存」写起：注册表里已经有 `AloneFu/dsh-calendar-plugin`，同样在右侧栏画带每日标记的月历。区别在于**条目是什么、由谁写**——那个插件是对已有 Obsidian 知识库的视图，这个则是由助手自己维护 DSH home 下的日期文件。注册表评审会把条目和插件代码对照，并检查是否已被现有条目覆盖，所以这一行必须把区别说清楚。截图另由本仓库的 `screenshots.json` 声明，换图不必再向注册表提 PR。
 
 注册表里的 `url` 必须与仓库完全一致，且仓库需要带上 `dsh-plugin` 这个 GitHub topic、并已创建满一天。已发布包的 `repository` 字段指向同一个地址，这就是两者关联的依据。
 
