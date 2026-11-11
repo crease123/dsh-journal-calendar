@@ -39,20 +39,7 @@ export type CalendarKey =
   | 'searchClose'
   | 'tagLabels'
   | 'help'
-  | 'helpTitle'
-  | 'helpClose'
-  | 'helpRecord'
-  | 'helpRecordText'
-  | 'helpTags'
-  | 'helpTagsText'
-  | 'helpMarkers'
-  | 'helpMarkersText'
-  | 'helpCheck'
-  | 'helpCheckText'
-  | 'helpJumps'
-  | 'helpJumpsText'
-  | 'helpDuty'
-  | 'helpDutyText'
+  | 'guideUrl'
 
 /**
  * English dictionary.
@@ -82,20 +69,7 @@ export const en: Record<CalendarKey, string> = {
   searchClose: 'Close search',
   tagLabels: 'Work,Study,Life,Health,Other',
   help: 'Journal guide',
-  helpTitle: 'How the journal works',
-  helpClose: 'Close the guide',
-  helpRecord: 'Recording',
-  helpRecordText: 'The assistant writes what you did and what you plan to do into the day\'s file. A todo is a plan and can be checked off; a memory has already happened.',
-  helpTags: 'Tags',
-  helpTagsText: 'Every entry carries one of five tags — Work, Study, Life, Health, Other — and its chip takes that tag\'s colour.',
-  helpMarkers: 'Day markers',
-  helpMarkersText: 'Hollow ring: todos still open. Green dot: every todo done. Blue dot: memories only. No marker: nothing recorded.',
-  helpCheck: 'Checking off and search',
-  helpCheckText: 'Click a todo row to flip it. The magnifier searches titles and tags across every day; picking a hit opens that day.',
-  helpJumps: 'Back to the conversation',
-  helpJumpsText: 'A memory recorded in a conversation opens that conversation, at the turn it was recorded in.',
-  helpDuty: 'Duty and files',
-  helpDutyText: '✎ rewrites the sentence that tells the assistant what the journal covers; empty restores the built-in one. Entries are plain JSON, one file per day in the journal folder — by default ~/.dsh/journal — and editable by hand.',
+  guideUrl: 'https://github.com/crease123/dsh-journal-calendar/blob/main/README.md',
 }
 
 /** Chinese dictionary. */
@@ -120,20 +94,7 @@ export const zh: Record<CalendarKey, string> = {
   searchClose: '关闭搜索',
   tagLabels: '工作,学习,生活,健康,其他',
   help: '使用说明',
-  helpTitle: '日历怎么用',
-  helpClose: '关闭说明',
-  helpRecord: '记录',
-  helpRecordText: '助手把「做了什么、打算做什么」写进当天文件。待办是打算做的事，可以勾选；记事是已经发生的事。',
-  helpTags: '标签',
-  helpTagsText: '每条都带一个固定标签：工作、学习、生活、健康、其他，标签块的颜色跟着它走。',
-  helpMarkers: '日期标记',
-  helpMarkersText: '空心圈：还有待办没完成。绿点：待办都完成了。蓝点：这天只有记事。没有标记：这天没有记录。',
-  helpCheck: '勾选与搜索',
-  helpCheckText: '点待办行可以切换完成状态。放大镜按标题和标签搜所有日期，点一条结果就跳到那天。',
-  helpJumps: '回到对话',
-  helpJumpsText: '在对话里记下的记事，点标题就回到那条对话，停在记录它的那一轮。',
-  helpDuty: '职责文案与文件',
-  helpDutyText: '✎ 改写告诉助手「日记记什么」的那句话，留空恢复内置版本。条目是纯 JSON，日记目录里一天一个文件（默认 ~/.dsh/journal），可以直接编辑。',
+  guideUrl: 'https://github.com/crease123/dsh-journal-calendar/blob/main/README.zh.md',
 }
 
 /**

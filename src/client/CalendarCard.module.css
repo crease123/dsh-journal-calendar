@@ -91,23 +91,17 @@
   -webkit-backdrop-filter: blur(2.5px);
 }
 
-/* Both overlays float over the calendar with one surface and one shadow; only
-   the duty editor anchors to the ✎ button and carries its caret. */
-.popover,
-.help {
+.popover {
   position: absolute;
   z-index: 20;
   top: 42px;
   right: 10px;
   left: 10px;
+  padding: 10px;
   border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
   background: var(--dsw-alias-bg-layer-2);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.popover {
-  padding: 10px;
 }
 
 /* The tail: a rotated square keeping only its top-left edges, so the floating
@@ -433,8 +427,7 @@
   border-color: var(--dsw-alias-brand-primary);
 }
 
-.searchClose,
-.helpClose {
+.searchClose {
   appearance: none;
   flex: 0 0 auto;
   padding: 2px 8px;
@@ -446,8 +439,7 @@
   font: inherit;
 }
 
-.searchClose:hover,
-.helpClose:hover {
+.searchClose:hover {
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
@@ -511,47 +503,4 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
-}
-
-/* The guide keeps the duty editor's surface but reaches the pane floor and
-   scrolls inside it, so a long feature list never pushes the card past the
-   sidebar. */
-.help {
-  bottom: 10px;
-  display: flex;
-  box-sizing: border-box;
-  flex-direction: column;
-  padding: 10px 12px;
-  outline: none;
-}
-
-.helpHead {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 6px;
-  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
-}
-
-.helpTitle {
-  font-weight: 500;
-}
-
-.helpBody {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* The feature name carries the weight; its explanation sits one step back. */
-.helpSection {
-  margin-top: 10px;
-  font-weight: 500;
-}
-
-.helpText {
-  margin-top: 2px;
-  color: var(--dsw-alias-label-secondary);
 }
