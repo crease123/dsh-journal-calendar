@@ -38,8 +38,8 @@ export type CalendarKey =
   | 'searchEmpty'
   | 'searchClose'
   | 'tagLabels'
-  | 'help'
-  | 'guideUrl'
+  | 'openRepo'
+  | 'repoUrl'
 
 /**
  * English dictionary.
@@ -68,8 +68,8 @@ export const en: Record<CalendarKey, string> = {
   searchEmpty: 'Nothing matches.',
   searchClose: 'Close search',
   tagLabels: 'Work,Study,Life,Health,Other',
-  help: 'Journal guide',
-  guideUrl: 'https://github.com/crease123/dsh-journal-calendar/blob/main/README.md',
+  openRepo: 'Open the project on GitHub',
+  repoUrl: 'https://github.com/crease123/dsh-journal-calendar',
 }
 
 /** Chinese dictionary. */
@@ -93,8 +93,8 @@ export const zh: Record<CalendarKey, string> = {
   searchEmpty: '没有匹配的条目。',
   searchClose: '关闭搜索',
   tagLabels: '工作,学习,生活,健康,其他',
-  help: '使用说明',
-  guideUrl: 'https://github.com/crease123/dsh-journal-calendar/blob/main/README.zh.md',
+  openRepo: '在 GitHub 上打开项目',
+  repoUrl: 'https://github.com/crease123/dsh-journal-calendar',
 }
 
 /**

@@ -48,8 +48,8 @@ function labelsOf(dictionary: Record<string, string>): CalendarLabels {
     searchPlaceholder: dictionary['searchPlaceholder'] ?? '',
     searchEmpty: dictionary['searchEmpty'] ?? '',
     searchClose: dictionary['searchClose'] ?? '',
-    help: dictionary['help'] ?? '',
-    guideUrl: dictionary['guideUrl'] ?? '',
+    openRepo: dictionary['openRepo'] ?? '',
+    repoUrl: dictionary['repoUrl'] ?? '',
     tags: tagLabels(dictionary['tagLabels'] ?? ''),
   }
 }
@@ -221,19 +221,19 @@ describe('CalendarCard render', () => {
     expect(html).not.toContain(labelsOf(en).dutyHint)
   })
 
-  it('carries the guide behind its own button, and nothing else', () => {
+  it('sends the reader to the project, not to a copy of the guide', () => {
     const html = render(labelsOf(en))
 
-    expect(html).toContain(`aria-label="${escaped(labelsOf(en).help)}"`)
-    // The guide is a link to the README, so the card holds no copy of it.
+    expect(html).toContain(`aria-label="${escaped(labelsOf(en).openRepo)}"`)
+    // The README lives in the repository, so the card holds no copy of it.
     expect(html).not.toContain('role="dialog"')
   })
 })
 
-describe('guide address', () => {
-  it('points each locale at its own README in the project repository', () => {
-    expect(en.guideUrl).toBe('https://github.com/crease123/dsh-journal-calendar/blob/main/README.md')
-    expect(zh.guideUrl).toBe('https://github.com/crease123/dsh-journal-calendar/blob/main/README.zh.md')
+describe('project address', () => {
+  it('points both locales at the repository, whose star button is the point', () => {
+    expect(en.repoUrl).toBe('https://github.com/crease123/dsh-journal-calendar')
+    expect(zh.repoUrl).toBe('https://github.com/crease123/dsh-journal-calendar')
   })
 })
 

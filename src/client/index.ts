@@ -108,8 +108,8 @@ export function apply(ctx: ClientContext): void {
         searchPlaceholder: t('searchPlaceholder'),
         searchEmpty: t('searchEmpty'),
         searchClose: t('searchClose'),
-        help: t('help'),
-        guideUrl: t('guideUrl'),
+        openRepo: t('openRepo'),
+        repoUrl: t('repoUrl'),
       },
       loadMonth: async (month) => {
         await mounted

@@ -6,12 +6,14 @@ A daily journal the agent keeps on its own, for [DeepSeek Harness](https://githu
 
 ![The journal card in the right sidebar: a month grid whose cells are marked by open todos, finished todos or memories, and below it the selected day's todos and memories, each carrying a colour-coded tag chip.](assets/screenshots/calendar.webp)
 
+If the plugin is useful to you, a star on [the repository](https://github.com/crease123/dsh-journal-calendar) is the simplest way to say so — and the `?` in the month header opens that same page.
+
 ## Contents
 
 Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest release `0.5.0`.
 
-- [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, day markers, and the button that opens this file
-  - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [Day markers and checking off](#day-markers-and-checking-off) · [The guide inside the card](#the-guide-inside-the-card)
+- [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, day markers, and the button that opens the project
+  - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [Day markers and checking off](#day-markers-and-checking-off) · [The button in the header](#the-button-in-the-header)
 - [What it contributes](#what-it-contributes) — the three faces the bundle mounts
 - [Install](#install) — from npm, from the release tarball, or from the repository
   - [Installing the release tarball instead](#installing-the-release-tarball-instead) · [Installing from the repository instead](#installing-from-the-repository-instead)
@@ -64,9 +66,9 @@ An entry recorded from a conversation also stores that Session and the turn it c
 
 A calendar cell says what the day holds: a hollow ring while a todo is still open, a green dot once every todo is done, a blue dot when only memories were recorded, and nothing at all when the day is empty. Clicking a todo row flips it, and the change goes straight back to that day's file. A memory already happened, so it has no box to tick.
 
-### The guide inside the card
+### The button in the header
 
-The `?` in the month header opens this README in the browser — `README.zh.md` when the interface is Chinese, `README.md` otherwise. The feature list therefore lives in one place and the card ships no second copy of it to fall out of date.
+The `?` in the month header opens the project on GitHub, where this README lives and where the star button is one click away. The card therefore ships no second copy of the guide to fall out of date.
 
 [↑ Back to contents](#contents)
 
@@ -218,8 +220,8 @@ name: crease123/dsh-journal-calendar
 category: memory
 tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
 description:
-  en: "A journal the agent keeps on its own: one sentence injected into the system prompt makes recording one of its duties, so it notes what you have done and what you intend to do, and each dated todo or memory lands on its day in the right sidebar's month calendar, marked per day by open todos, finished todos or memories; that injected sentence is editable from the calendar itself, letting you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) as a colour-coded chip, todos are checkable, all entries are searchable by title and tag, and clicking a memory opens the session that recorded it and scrolls to that turn; the journal_record tool writes one JSON file per day under the DSH home."
-  zh: '助手主动替你维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是每条带时间的待办或记事都会落到右侧栏月历上对应的那一天，单元格按「有待办未完成 / 待办已完成 / 只有记事」标记；这句话可以直接在日历上改写，用来调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可勾选，全部记录可按标题与标签搜索，点击一条记忆会打开记录它的那次会话并滚动到对应轮次；条目由 journal_record 工具写入 DSH home 下一天一个的 JSON 文件。'
+  en: "An agent-kept daily journal: one sentence injected into the system prompt makes recording one of the agent's duties, so what you have done and what you intend to do is written as dated todos and memories, one JSON file per day under the DSH home, and drawn on the right sidebar's month calendar — a hollow ring while a todo is still open, a green dot once every todo is done, a blue dot when the day holds only memories; that injected sentence is rewritten from the calendar itself, which is how you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) drawn as a colour-coded chip, todos can be checked off from the card, titles and tags are searchable across every day, and clicking a memory opens the conversation that recorded it and stops at that turn."
+  zh: '助手主动维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是这些事被写成带日期的待办与记事，存放在 DSH home 下一天一个的 JSON 文件里，并画在右侧栏的月历上——有待办没做完的那天是空心圈，待办都做完是绿点，只记了记事的那天是蓝点；这句话可以直接在日历上改写，用它调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可以在卡片上勾选，全部日期的标题与标签都能搜索，点击一条记在对话里的记录会打开那次会话并停在对应轮次。'
 ```
 
 The description leads with what the plugin does rather than how it stores it, because the registry already lists `AloneFu/dsh-calendar-plugin`, which also draws a month grid with per-day markers in the sidebar. The difference is what the entries are and who writes them — that plugin views an existing Obsidian vault, while this one has the agent maintain its own day files under the DSH home. A registry reviewer checks an entry against the plugin, and asks whether an existing entry already covers it, so the line has to carry that distinction. Screenshots are declared separately, in this repository's `screenshots.json`, so they can change without another registry pull request.

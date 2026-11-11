@@ -61,10 +61,10 @@ export interface CalendarLabels {
   searchEmpty: string
   /** Accessible name of the button that closes search. */
   searchClose: string
-  /** Accessible name of the header button that opens the guide in the browser. */
-  help: string
-  /** Address of the guide that button opens: the README in the active language. */
-  guideUrl: string
+  /** Accessible name of the header button that opens the project in a browser. */
+  openRepo: string
+  /** Address that button opens; its README is the guide, and its star button is the point. */
+  repoUrl: string
 }
 
 /** Data access handed to the body by the plugin's inject face. */
@@ -568,9 +568,9 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
           <button
             type="button"
             className={css.edit}
-            aria-label={props.labels.help}
-            title={props.labels.help}
-            onClick={() => { window.open(props.labels.guideUrl, '_blank', 'noopener,noreferrer') }}
+            aria-label={props.labels.openRepo}
+            title={props.labels.openRepo}
+            onClick={() => { window.open(props.labels.repoUrl, '_blank', 'noopener,noreferrer') }}
           >
             <span className={css.glyph} aria-hidden="true">?</span>
           </button>
