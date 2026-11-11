@@ -47,7 +47,7 @@ DSH_CHECKOUT=/Users/lw/code/create/agents/deepseek-harness pnpm run regen-typert
 - 职责文案：`~/.dsh/journal/duty.md`（不存在或空白 = 内置默认句；上限 2000 字符；也可在日历卡片的 ✎ 浮层里编辑）
 - `duty.md` 每组装一次系统提示词就同步读一次，改完下一条消息即生效
 
-## 市场截图
+## 市场图片
 
 插件市场的详情页从本仓库读截图，不需要改市场那边的条目、也不用提 PR：
 
@@ -57,7 +57,7 @@ DSH_CHECKOUT=/Users/lw/code/create/agents/deepseek-harness pnpm run regen-typert
 - `assets/` 不在 `package.json` 的 `files` 里，所以截图不进 npm 包
 - `tests/screenshots.spec.ts` 会挡住条数越界、路径越界、指向不存在文件的写法
 
-市场卡片左上角的图标不是这个文件：它来自市场条目里的 `icon:`（必须是 GitHub 托管的位图），改它要提 PR 到 awesome-dsh-plugin。
+市场卡片左上角的图标不是这个文件：它来自市场条目里的 `icon:`（必须是 GitHub 托管的位图），改它要提 PR 到 awesome-dsh-plugin。本仓库的方块图是 `assets/icon.png`（512×512，蓝底 + 卡片里那个日历字形），条目里指向它的 `raw.githubusercontent.com` 地址。
 
 ## 发布
 
