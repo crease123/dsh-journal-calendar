@@ -1,20 +1,19 @@
 # 开发指南
 
-本仓库是 DSH 插件 `dsh-journal-calendar` 的源码，也是当前运行的 DSH（desktop profile）所加载的那份代码（通过符号链接）。
+本仓库是 DSH 插件 `dsh-journal-calendar` 的源码。
 
 ## 当前安装形态
 
-- `~/.dsh/profiles/desktop/package.json` 里声明的仍是 `"dsh-journal-calendar": "^0.2.0"`（与 `pnpm-lock.yaml` 一致，保证 DSH 启动时 manifest 与 lockfile 不打架）
-- `~/.dsh/profiles/desktop/node_modules/dsh-journal-calendar` **是手工建的符号链接，指向本仓库**，所以运行时加载的是这里的源码
-- 一旦有人执行 `dsh plugin add dsh-journal-calendar` 或 `pnpm install`，链接会被换回 npm 包，需要重建：
+- `~/.dsh/profiles/desktop/package.json` 声明 `"dsh-journal-calendar": "0.5.0"`，`node_modules/dsh-journal-calendar` 是 npm 包安装出来的**实体副本**：默认情况下运行中的 DSH 加载的是发布版，不读本仓库。
+- 想让 DSH 加载本仓库（每条改动不必发包），把这个副本换成符号链接：
   ```sh
   cd ~/.dsh/profiles/desktop/node_modules
   rm -rf dsh-journal-calendar
   ln -s /Users/lw/code/prac/dsh-journal-calendar dsh-journal-calendar
   ```
-- 想彻底回到 npm 版本：删掉链接后重装（`dsh plugin add dsh-journal-calendar`）
+- 反向：`dsh plugin --profile desktop add dsh-journal-calendar@<ver>` 会把链接换回实体副本（这也会让上面的符号链接失效，需要重建）。
 
-**改动要真正生效，重启 DSH app**（当前 app 进程里加载的仍是旧模块）。
+**改动要真正生效，重启 DSH app**（app 进程里加载的仍是旧模块）。
 
 ## 开发回路
 
@@ -47,6 +46,18 @@ DSH_CHECKOUT=/Users/lw/code/create/agents/deepseek-harness pnpm run regen-typert
 - 标签：`tag` 是五个固定值之一（`work`/`study`/`life`/`health`/`other`），卡片画成中英 chip；旧文件里的自由 `tags` 数组读回时折算成一个（对不上的一律 `other`）
 - 职责文案：`~/.dsh/journal/duty.md`（不存在或空白 = 内置默认句；上限 2000 字符；也可在日历卡片的 ✎ 浮层里编辑）
 - `duty.md` 每组装一次系统提示词就同步读一次，改完下一条消息即生效
+
+## 市场截图
+
+插件市场的详情页从本仓库读截图，不需要改市场那边的条目、也不用提 PR：
+
+- `screenshots.json` 放在 `package.json` 旁边，列出 1–8 张图片，路径相对该文件（当前是 `assets/screenshots/calendar.webp`）
+- 格式限 `png`/`jpg`/`jpeg`/`webp`；路径不能以 `/` 开头、不能含 `..`；也接受 GitHub 托管的 https 绝对 URL，第三方图床会被拒
+- 市场每晚构建时抓取 main 上的这份清单，推上去即可生效；没声明时市场会从 README 自动抽图
+- `assets/` 不在 `package.json` 的 `files` 里，所以截图不进 npm 包
+- `tests/screenshots.spec.ts` 会挡住条数越界、路径越界、指向不存在文件的写法
+
+市场卡片左上角的图标不是这个文件：它来自市场条目里的 `icon:`（必须是 GitHub 托管的位图），改它要提 PR 到 awesome-dsh-plugin。
 
 ## 发布
 
