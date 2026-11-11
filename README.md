@@ -10,7 +10,7 @@ If the plugin is useful to you, a star on [the repository](https://github.com/cr
 
 ## Contents
 
-Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest release `0.5.0`.
+Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest release `0.6.0`.
 
 - [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, day markers, and the button that opens the project
   - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [Day markers and checking off](#day-markers-and-checking-off) · [The button in the header](#the-button-in-the-header)
@@ -94,7 +94,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 Then reload the page. The **日历 / Journal** tab appears in the right sidebar.
 
-That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.5.0`. A bare name resolves to the newest release pnpm's supply-chain policy already trusts: that policy holds back any version published less than 24 hours ago, so pin the exact version to install the latest one right after a release. To remove it again:
+That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.6.0`. A bare name resolves to the newest release pnpm's supply-chain policy already trusts: that policy holds back any version published less than 24 hours ago, so pin the exact version to install the latest one right after a release. To remove it again:
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
@@ -105,7 +105,7 @@ dsh plugin --profile web remove dsh-journal-calendar
 Every release attaches that same prebuilt tarball to its GitHub release, which covers a registry that has not mirrored the release yet:
 
 ```sh
-dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
 ```
 
 ### Installing from the repository instead
@@ -218,10 +218,10 @@ To list it in the [dsh-market](https://github.com/dsh-market/dsh-market) plugin 
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
-tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
 description:
-  en: "An agent-kept daily journal: one sentence injected into the system prompt makes recording one of the agent's duties, so what you have done and what you intend to do is written as dated todos and memories, one JSON file per day under the DSH home, and drawn on the right sidebar's month calendar — a hollow ring while a todo is still open, a green dot once every todo is done, a blue dot when the day holds only memories; that injected sentence is rewritten from the calendar itself, which is how you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) drawn as a colour-coded chip, todos can be checked off from the card, titles and tags are searchable across every day, and clicking a memory opens the conversation that recorded it and stops at that turn."
-  zh: '助手主动维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是这些事被写成带日期的待办与记事，存放在 DSH home 下一天一个的 JSON 文件里，并画在右侧栏的月历上——有待办没做完的那天是空心圈，待办都做完是绿点，只记了记事的那天是蓝点；这句话可以直接在日历上改写，用它调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可以在卡片上勾选，全部日期的标题与标签都能搜索，点击一条记在对话里的记录会打开那次会话并停在对应轮次。'
+  en: "An agent-kept daily journal: one sentence injected into the system prompt makes recording one of the agent's duties, so what you have done and what you intend to do is written as dated todos and memories, one JSON file per day under the DSH home, and drawn on the right sidebar's month calendar — a hollow ring while a todo is still open, a green dot once every todo is done, a blue dot when the day holds only memories; that injected sentence is rewritten from the calendar itself, which is how you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) drawn as a colour-coded chip, todos can be checked off from the card, titles and tags are searchable across every day, and clicking a memory opens the conversation that recorded it and stops at that turn; the ? beside the month heading opens the project on GitHub."
+  zh: '助手主动维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是这些事被写成带日期的待办与记事，存放在 DSH home 下一天一个的 JSON 文件里，并画在右侧栏的月历上——有待办没做完的那天是空心圈，待办都做完是绿点，只记了记事的那天是蓝点；这句话可以直接在日历上改写，用它调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可以在卡片上勾选，全部日期的标题与标签都能搜索，点击一条记在对话里的记录会打开那次会话并停在对应轮次；月份标题旁的 ? 打开 GitHub 上的项目仓库。'
 ```
 
 The description leads with what the plugin does rather than how it stores it, because the registry already lists `AloneFu/dsh-calendar-plugin`, which also draws a month grid with per-day markers in the sidebar. The difference is what the entries are and who writes them — that plugin views an existing Obsidian vault, while this one has the agent maintain its own day files under the DSH home. A registry reviewer checks an entry against the plugin, and asks whether an existing entry already covers it, so the line has to carry that distinction. Screenshots are declared separately, in this repository's `screenshots.json`, so they can change without another registry pull request.

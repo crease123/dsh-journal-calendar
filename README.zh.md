@@ -10,7 +10,7 @@
 
 ## 目录
 
-当前状态：已在 DSH `0.2.2-rc.1`（Node 22.19.0 / 26.4.0）上验证，最新发布 `0.5.0`。
+当前状态：已在 DSH `0.2.2-rc.1`（Node 22.19.0 / 26.4.0）上验证，最新发布 `0.6.0`。
 
 - [功能介绍](#功能介绍) —— 记录什么、可改的职责提示词、五个标签、搜索、跳回对话、日期标记，以及卡片里那个打开项目仓库的按钮
   - [那句职责提示词](#那句职责提示词) · [五个标签](#五个标签) · [搜索条目](#搜索条目) · [跳回对话](#跳回对话) · [日期标记与勾选](#日期标记与勾选) · [卡片里的那个按钮](#卡片里的那个按钮)
@@ -94,7 +94,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 刷新页面，右侧栏出现 **日历** 标签页。
 
-它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.5.0`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
+它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.6.0`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
@@ -105,7 +105,7 @@ dsh plugin --profile web remove dsh-journal-calendar
 每次发版都会把同一份预构建产物挂到 GitHub Release 上，适合你所用的源还没同步该版本的场合：
 
 ```sh
-dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
 ```
 
 ### 改为从仓库安装
@@ -218,7 +218,7 @@ npm 现在要求发布时具备双因素认证。账号没开 2FA、或 token �
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
-tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.5.0/dsh-journal-calendar-0.5.0.tgz
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
 description:
   en: "A journal the agent keeps on its own: one sentence injected into the system prompt makes recording one of its duties, so it notes what you have done and what you intend to do, and each dated todo or memory lands on its day in the right sidebar's month calendar, marked per day by open todos, finished todos or memories; that injected sentence is editable from the calendar itself, letting you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) as a colour-coded chip, todos are checkable, all entries are searchable by title and tag, and clicking a memory opens the session that recorded it and scrolls to that turn; the journal_record tool writes one JSON file per day under the DSH home."
   zh: '助手主动替你维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是每条带时间的待办或记事都会落到右侧栏月历上对应的那一天，单元格按「有待办未完成 / 待办已完成 / 只有记事」标记；这句话可以直接在日历上改写，用来调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可勾选，全部记录可按标题与标签搜索，点击一条记忆会打开记录它的那次会话并滚动到对应轮次；条目由 journal_record 工具写入 DSH home 下一天一个的 JSON 文件。'
