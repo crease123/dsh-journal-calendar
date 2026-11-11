@@ -8,17 +8,20 @@ A daily journal the agent keeps on its own, for [DeepSeek Harness](https://githu
 
 ## Contents
 
-- [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, and the guide inside the card
-  - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [The guide inside the card](#the-guide-inside-the-card)
+Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest release `0.5.0`.
+
+- [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, day markers, and the button that opens this file
+  - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [Day markers and checking off](#day-markers-and-checking-off) · [The guide inside the card](#the-guide-inside-the-card)
 - [What it contributes](#what-it-contributes) — the three faces the bundle mounts
 - [Install](#install) — from npm, from the release tarball, or from the repository
   - [Installing the release tarball instead](#installing-the-release-tarball-instead) · [Installing from the repository instead](#installing-from-the-repository-instead)
-- [Where your entries live](#where-your-entries-live) — the day-file format and the `dir` option
-- [Development](#development) — build, test, and how the Remote artifacts are generated
-  - [The generated Remote artifacts](#the-generated-remote-artifacts) · [The publint warning about `./client`](#the-publint-warning-about-client)
-- [Compatibility](#compatibility) — verified DSH and Node versions, and why the ranges are pinned
-- [Publishing](#publishing) — npm, 2FA staging, and the market entry
-- [Known limitations](#known-limitations) — what does not work, and why
+- [Where your entries live](#where-your-entries-live) — the per-day file format and the `dir` option
+- [Maintainers](#maintainers) — development, compatibility, publishing
+  - [Development](#development) — building, testing, and how the Remote artifacts are generated
+    - [The generated Remote artifacts](#the-generated-remote-artifacts) · [The publint warning about `./client`](#the-publint-warning-about-client)
+  - [Compatibility](#compatibility) — the DSH and Node versions verified here, and why the range is pinned
+  - [Publishing](#publishing) — npm, two-factor staged releases, and the marketplace entry
+- [Known limitations](#known-limitations) — what it cannot do, and why
 - [License](#license)
 
 ## What it does
@@ -57,9 +60,15 @@ The magnifier button beside the month heading turns the lower half of the card i
 
 An entry recorded from a conversation also stores that Session and the turn it came from, so a memory in the card is a link: clicking one switches to the conversation and scrolls to the turn the entry was recorded in, with a brief highlight. Entries written outside a conversation (hand-edited files, or anything recorded before this existed) carry no source and stay plain text. The scroll addresses turns through the Web client's `data-chat-turn` attribute; if a future client stops publishing it, the click still opens the conversation and simply does not scroll.
 
+### Day markers and checking off
+
+A calendar cell says what the day holds: a hollow ring while a todo is still open, a green dot once every todo is done, a blue dot when only memories were recorded, and nothing at all when the day is empty. Clicking a todo row flips it, and the change goes straight back to that day's file. A memory already happened, so it has no box to tick.
+
 ### The guide inside the card
 
-The `?` in the month header opens the card's own guide: what gets recorded, the five tags, what each day marker means, checking a todo off, search, the jump back to a conversation, and the duty sentence. It is copy in the same locale dictionaries as the rest of the card, so it follows the interface language and ships no separate page. Clicking the blur, the ✕, or pressing Escape closes it, and opening it replaces whichever of search or the duty editor was open.
+The `?` in the month header opens this README in the browser — `README.zh.md` when the interface is Chinese, `README.md` otherwise. The feature list therefore lives in one place and the card ships no second copy of it to fall out of date.
+
+[↑ Back to contents](#contents)
 
 ## What it contributes
 
@@ -72,6 +81,8 @@ One bundle row mounts all three faces:
 | Browser half | the calendar card, a right-sidebar tab |
 
 The card shows a month grid with a marker per day, and below it the selected day's `TO DO` and `MEMORY` sections. Todos carry a checkbox that writes straight back to the day file.
+
+[↑ Back to contents](#contents)
 
 ## Install
 
@@ -107,6 +118,8 @@ That fetches **source**, so it builds on your machine. The first attempt stops, 
 
 Every path ends at the same prebuilt artifact: the release tarball is byte-identical to the package the registry serves (one sha1 covers both), and both install with no authorization step at all; the `git+https://` install builds on your machine through its authorization step. Each boots with no warnings and reads and writes real day files.
 
+[↑ Back to contents](#contents)
+
 ## Where your entries live
 
 One JSON file per day, at `$DSH_HOME/journal/<YYYY-MM-DD>.json` (`~/.dsh/journal` by default). Each file is the complete record of that day:
@@ -134,7 +147,11 @@ Point it somewhere else by giving the row a `dir`:
 
 The service treats a file it cannot parse as a hard error rather than rebuilding it, because silently rewriting a day would destroy the record it holds.
 
-## Development
+[↑ Back to contents](#contents)
+
+## Maintainers
+
+### Development
 
 ```sh
 pnpm install
@@ -146,7 +163,7 @@ pnpm pack           # builds, then writes the publishable tarball
 
 The repository owns its own tool roots — `pnpm-workspace.yaml` and `vitest.config.ts` exist so pnpm and Vitest do not walk up into an ancestor repository when this package is developed inside a DSH checkout.
 
-### The generated Remote artifacts
+#### The generated Remote artifacts
 
 `generated/` holds the Typert artifacts (`typert.host.*`, `typert.remote-client.*`) that the Host contributes and the browser bundle inlines. They are **generated, not built here**:
 
@@ -162,13 +179,13 @@ The checkout's `packages/typert/generator` must be built first. Rerun whenever a
 
 **Restart the DSH host after regenerating.** The Typert loader registers a package's Host face from its `./typert` export and caches the imported manifest per package name for the life of the process, while a hot reload of the package withdraws its strict definitions without committing a replacement. The running card then fails every call with `its strict definition was withdrawn and SRC fallback is forbidden`, even though the artifacts on disk are correct. A restart registers them once, from the new files.
 
-### The publint warning about `./client`
+#### The publint warning about `./client`
 
 `npx publint` reports one warning: `./lib/client.js` is CommonJS inside a `"type": "module"` package, so Node would read it as ESM.
 
 Leave it. The browser module table fetches that file's bytes and materializes it through `window.__ModuleLoader__.load({ id, factory })`; Node never resolves or imports it, so the extension it is judged by never applies. Renaming it to `.cjs` to silence the warning would depart from every DSH client plugin, all of which ship `lib/client.js` under `"type": "module"`.
 
-## Compatibility
+### Compatibility
 
 Declared through `peerDependencies` and `engines.dsh`. Verified end to end against DSH `0.2.2-rc.1`: install, boot, bundle delivery, and the `month` / `day` / `setDone` endpoints reading and writing real day files.
 
@@ -180,7 +197,7 @@ Every DSH range names each supported release line explicitly, for example `>=0.2
 
 DSH reads these ranges at install time and refuses an incompatible plugin, restoring the profile manifest — verified by installing a deliberately-incompatible copy and watching it rejected. But DSH evaluates them with `includePrerelease`, so a range too broad for your package manager still passes there. That asymmetry is exactly why the ranges are pinned by a test instead of eyeballed.
 
-## Publishing
+### Publishing
 
 The repository is the source of truth for the npm package and for the community listing.
 
@@ -209,6 +226,8 @@ The description leads with what the plugin does rather than how it stores it, be
 
 The registry's `url` must match the repository exactly, and the repository must carry the `dsh-plugin` GitHub topic and be at least one day old. The published package's `repository` field points at the same URL, which is what links the two.
 
+[↑ Back to contents](#contents)
+
 ## Known limitations
 
 - **The Web UI is required to see the calendar.** On a headless profile the tool still records entries; nothing draws them.
@@ -216,6 +235,8 @@ The registry's `url` must match the repository exactly, and the repository must 
 - **Days are grouped by the local date of the machine running DSH.** A day file does not carry a timezone, so a laptop that changes timezone mid-travel can attribute an entry to the neighbouring day.
 - **Jumping back to a conversation relies on the Web client.** The card locates the turn through the `data-chat-turn` attribute; a client that stops publishing it opens the conversation without scrolling, and entries written before the anchor existed have no source at all.
 - **`todo` here is not `todo_write`.** The calendar's todos are durable, one JSON file per day; the built-in `todo_write` tool is a per-session list. Both read as "记录一下" to a model, and no prompt currently distinguishes them.
+
+[↑ Back to contents](#contents)
 
 ## License
 
