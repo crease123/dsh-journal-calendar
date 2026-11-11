@@ -6,6 +6,21 @@ A daily journal the agent keeps on its own, for [DeepSeek Harness](https://githu
 
 ![The journal card in the right sidebar: a month grid whose cells are marked by open todos, finished todos or memories, and below it the selected day's todos and memories, each carrying a colour-coded tag chip.](assets/screenshots/calendar.webp)
 
+## Contents
+
+- [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, and the guide inside the card
+  - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [The guide inside the card](#the-guide-inside-the-card)
+- [What it contributes](#what-it-contributes) — the three faces the bundle mounts
+- [Install](#install) — from npm, from the release tarball, or from the repository
+  - [Installing the release tarball instead](#installing-the-release-tarball-instead) · [Installing from the repository instead](#installing-from-the-repository-instead)
+- [Where your entries live](#where-your-entries-live) — the day-file format and the `dir` option
+- [Development](#development) — build, test, and how the Remote artifacts are generated
+  - [The generated Remote artifacts](#the-generated-remote-artifacts) · [The publint warning about `./client`](#the-publint-warning-about-client)
+- [Compatibility](#compatibility) — verified DSH and Node versions, and why the ranges are pinned
+- [Publishing](#publishing) — npm, 2FA staging, and the market entry
+- [Known limitations](#known-limitations) — what does not work, and why
+- [License](#license)
+
 ## What it does
 
 The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, one `tag`, and optionally `date` and `time`. Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
