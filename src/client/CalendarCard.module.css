@@ -19,12 +19,15 @@
 }
 
 /* Five tracks: arrow, flexible gap, heading, flexible gap, arrow. Equal `1fr`
-   gaps keep the heading on the card's midline while the icon pair lands halfway
-   between the heading and the next-month arrow instead of crowding either. */
+   gaps keep the heading on the card's midline while the icon group lands halfway
+   between the heading and the next-month arrow instead of crowding either.
+   The icon track may not drop below its own content, and the heading may
+   shrink, so a pane dragged narrow ellipsizes the month instead of letting the
+   icons sit on top of it. */
 .header {
   display: grid;
   flex: 0 0 auto;
-  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, auto) minmax(min-content, 1fr) auto;
   align-items: center;
 }
 
@@ -41,7 +44,10 @@
 .month {
   grid-column: 3;
   justify-self: center;
+  max-width: 100%;
+  overflow: hidden;
   font-weight: 500;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -49,7 +55,6 @@
   display: flex;
   grid-column: 4;
   align-items: center;
-  gap: 2px;
   justify-self: center;
 }
 
@@ -57,7 +62,7 @@
 .edit {
   appearance: none;
   flex: 0 0 auto;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -86,17 +91,23 @@
   -webkit-backdrop-filter: blur(2.5px);
 }
 
-.popover {
+/* Both overlays float over the calendar with one surface and one shadow; only
+   the duty editor anchors to the ✎ button and carries its caret. */
+.popover,
+.help {
   position: absolute;
   z-index: 20;
   top: 42px;
   right: 10px;
   left: 10px;
-  padding: 10px;
   border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
   background: var(--dsw-alias-bg-layer-2);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.popover {
+  padding: 10px;
 }
 
 /* The tail: a rotated square keeping only its top-left edges, so the floating
@@ -422,7 +433,8 @@
   border-color: var(--dsw-alias-brand-primary);
 }
 
-.searchClose {
+.searchClose,
+.helpClose {
   appearance: none;
   flex: 0 0 auto;
   padding: 2px 8px;
@@ -434,7 +446,8 @@
   font: inherit;
 }
 
-.searchClose:hover {
+.searchClose:hover,
+.helpClose:hover {
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
@@ -489,4 +502,56 @@
    and weight instead of bringing an emoji's own palette. */
 .icon {
   display: block;
+}
+
+/* The guide's button carries a typed glyph rather than artwork, sized to the
+   magnifier's box so the three header buttons share one optical height. */
+.glyph {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* The guide keeps the duty editor's surface but reaches the pane floor and
+   scrolls inside it, so a long feature list never pushes the card past the
+   sidebar. */
+.help {
+  bottom: 10px;
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.helpHead {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.helpTitle {
+  font-weight: 500;
+}
+
+.helpBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* The feature name carries the weight; its explanation sits one step back. */
+.helpSection {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.helpText {
+  margin-top: 2px;
+  color: var(--dsw-alias-label-secondary);
 }

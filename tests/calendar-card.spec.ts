@@ -15,8 +15,8 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { en, tagLabels, zh } from '../src/client/locales.ts'
-import { CalendarCard, DutyPopover, MemoryEntry, SearchPanel, TodoRow, dutyDirty, dutyKeyIntent, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
-import type { CalendarCardProps, CalendarLabels, DutyPopoverProps, SearchPanelProps } from '../src/client/CalendarCard.tsx'
+import { CalendarCard, DutyPopover, HelpPopover, MemoryEntry, SearchPanel, TodoRow, dutyDirty, dutyKeyIntent, helpSectionsOf, markerOf, monthHeadingOf } from '../src/client/CalendarCard.tsx'
+import type { CalendarCardProps, CalendarLabels, DutyPopoverProps, HelpPopoverProps, SearchPanelProps } from '../src/client/CalendarCard.tsx'
 import type { JournalDay, JournalDuty, JournalEntry, JournalMonthDay, JournalSearchHit } from '../src/types.ts'
 
 /** One month row carrying only what the marker rule reads. */
@@ -48,6 +48,21 @@ function labelsOf(dictionary: Record<string, string>): CalendarLabels {
     searchPlaceholder: dictionary['searchPlaceholder'] ?? '',
     searchEmpty: dictionary['searchEmpty'] ?? '',
     searchClose: dictionary['searchClose'] ?? '',
+    help: dictionary['help'] ?? '',
+    helpTitle: dictionary['helpTitle'] ?? '',
+    helpClose: dictionary['helpClose'] ?? '',
+    helpRecord: dictionary['helpRecord'] ?? '',
+    helpRecordText: dictionary['helpRecordText'] ?? '',
+    helpTags: dictionary['helpTags'] ?? '',
+    helpTagsText: dictionary['helpTagsText'] ?? '',
+    helpMarkers: dictionary['helpMarkers'] ?? '',
+    helpMarkersText: dictionary['helpMarkersText'] ?? '',
+    helpCheck: dictionary['helpCheck'] ?? '',
+    helpCheckText: dictionary['helpCheckText'] ?? '',
+    helpJumps: dictionary['helpJumps'] ?? '',
+    helpJumpsText: dictionary['helpJumpsText'] ?? '',
+    helpDuty: dictionary['helpDuty'] ?? '',
+    helpDutyText: dictionary['helpDutyText'] ?? '',
     tags: tagLabels(dictionary['tagLabels'] ?? ''),
   }
 }
@@ -217,6 +232,74 @@ describe('CalendarCard render', () => {
     expect(html).toContain(`aria-label="${escaped(labelsOf(en).search)}"`)
     expect(html).not.toContain('<textarea')
     expect(html).not.toContain(labelsOf(en).dutyHint)
+  })
+
+  it('carries the guide behind its own button, closed by default', () => {
+    const html = render(labelsOf(en))
+
+    expect(html).toContain(`aria-label="${escaped(labelsOf(en).help)}"`)
+    expect(html).toContain('aria-expanded="false"')
+    // The feature list is only markup once its button asks for it.
+    expect(html).not.toContain('role="dialog"')
+    expect(html).not.toContain(labelsOf(en).helpRecordText)
+  })
+})
+
+describe('helpSectionsOf', () => {
+  it('names a feature and explains it in every locale', () => {
+    for (const dictionary of [en, zh]) {
+      const sections = helpSectionsOf(labelsOf(dictionary))
+
+      expect(sections.length).toBeGreaterThan(0)
+      for (const section of sections) {
+        expect(section.title.trim()).not.toBe('')
+        expect(section.body.trim()).not.toBe('')
+      }
+    }
+  })
+
+  it('keeps the Chinese guide translated instead of falling back to English', () => {
+    const english = helpSectionsOf(labelsOf(en))
+    const chinese = helpSectionsOf(labelsOf(zh))
+
+    expect(chinese).toHaveLength(english.length)
+    chinese.forEach((section, index) => {
+      expect(section.title).not.toBe(english[index]?.title)
+      expect(section.body).not.toBe(english[index]?.body)
+    })
+  })
+})
+
+describe('HelpPopover render', () => {
+  function render(labels: CalendarLabels): string {
+    const props = { labels, onClose: () => {} } as HelpPopoverProps
+    return renderToStaticMarkup(createElement(HelpPopover, props))
+  }
+
+  it('draws one section per feature, each with its own explanation', () => {
+    const labels = labelsOf(en)
+    const html = render(labels)
+
+    expect(html).toContain(`role="dialog"`)
+    expect(html).toContain(`aria-label="${escaped(labels.helpTitle)}"`)
+    for (const section of helpSectionsOf(labels)) {
+      expect(html).toContain(`>${escaped(section.title)}</div>`)
+      expect(html).toContain(`>${escaped(section.body)}</div>`)
+    }
+  })
+
+  it('offers the close button the header has no room for', () => {
+    const html = render(labelsOf(en))
+
+    expect(html).toContain(`aria-label="${escaped(labelsOf(en).helpClose)}"`)
+  })
+
+  it('renders the Chinese guide from its own dictionary', () => {
+    const html = render(labelsOf(zh))
+
+    expect(html).toContain(labelsOf(zh).helpTitle)
+    expect(html).toContain(labelsOf(zh).helpRecordText)
+    expect(html).toContain(`aria-label="${escaped(labelsOf(zh).helpClose)}"`)
   })
 })
 

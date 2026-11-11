@@ -8,7 +8,8 @@
  * The duty editor is a floating card over a blurred calendar rather than an
  * inline form: the header button is its whole chrome — open, save (it turns
  * into a check once the draft differs), or discard — so the card itself holds
- * only the field and one line of copy.
+ * only the field and one line of copy. The guide uses the same treatment for
+ * the feature list, opened from a `?` beside those buttons.
  *
  * Marker rule (from the owner's design):
  *   - todos exist and some are still open → hollow ring
@@ -59,6 +60,25 @@ export interface CalendarLabels {
   searchEmpty: string
   /** Accessible name of the button that closes search. */
   searchClose: string
+  /** Accessible name of the header button that opens the guide. */
+  help: string
+  /** Heading of the guide. */
+  helpTitle: string
+  /** Accessible name of the button that closes the guide. */
+  helpClose: string
+  /** Guide section names, each followed by its own line of copy. */
+  helpRecord: string
+  helpRecordText: string
+  helpTags: string
+  helpTagsText: string
+  helpMarkers: string
+  helpMarkersText: string
+  helpCheck: string
+  helpCheckText: string
+  helpJumps: string
+  helpJumpsText: string
+  helpDuty: string
+  helpDutyText: string
 }
 
 /** Data access handed to the body by the plugin's inject face. */
@@ -111,6 +131,93 @@ export interface SearchPanelProps {
   onQuery: (text: string) => void
   onPick: (hit: JournalSearchHit) => void
   onClose: () => void
+}
+
+/** The guide's floating card: the feature list, and the three ways out. */
+export interface HelpPopoverProps {
+  labels: CalendarLabels
+  /** Dismiss the card: the blur, the ✕, or Escape. */
+  onClose: () => void
+}
+
+/** One guide section: a feature's name and the line that explains it. */
+export interface HelpSection {
+  /** Feature name, drawn as the section heading. */
+  title: string
+  /** What the feature does, in one sentence. */
+  body: string
+}
+
+/**
+ * The guide's sections in reading order, resolved from the active dictionary.
+ * The order is the card's own: what gets written, how it is labelled, how a day
+ * is marked, how to act on it, and where the text and the files come from.
+ * @param labels - copy for the locale in effect.
+ * @returns one section per feature the card offers.
+ */
+export function helpSectionsOf(labels: CalendarLabels): readonly HelpSection[] {
+  return [
+    { title: labels.helpRecord, body: labels.helpRecordText },
+    { title: labels.helpTags, body: labels.helpTagsText },
+    { title: labels.helpMarkers, body: labels.helpMarkersText },
+    { title: labels.helpCheck, body: labels.helpCheckText },
+    { title: labels.helpJumps, body: labels.helpJumpsText },
+    { title: labels.helpDuty, body: labels.helpDutyText },
+  ]
+}
+
+/**
+ * The guide as a floating card over the blurred calendar, sharing the duty
+ * editor's treatment so the card has one way of interrupting itself. The card
+ * scrolls rather than growing past the sidebar, and the header stays live:
+ * its buttons are how the other panels replace this one.
+ *
+ * @param props - copy for the active locale and the dismiss gesture.
+ * @returns the blur, the card with its feature list, and the close button.
+ */
+export function HelpPopover(props: HelpPopoverProps): ReactNode {
+  const card = useRef<HTMLDivElement | null>(null)
+
+  // Focus moves into the card so Escape reaches it and the ✕ is one tab stop
+  // away; clicking the blur and the header buttons remain the other gestures.
+  useEffect(() => {
+    card.current?.focus()
+  }, [])
+
+  return (
+    <>
+      <div className={css.scrim} aria-hidden="true" onMouseDown={props.onClose} />
+      <div
+        ref={card}
+        className={css.help}
+        role="dialog"
+        aria-label={props.labels.helpTitle}
+        tabIndex={-1}
+        onKeyDown={(event) => { if (event.key === 'Escape') props.onClose() }}
+      >
+        <div className={css.helpHead}>
+          <span className={css.helpTitle}>{props.labels.helpTitle}</span>
+          <button
+            type="button"
+            className={css.helpClose}
+            aria-label={props.labels.helpClose}
+            title={props.labels.helpClose}
+            onClick={props.onClose}
+          >
+            ✕
+          </button>
+        </div>
+        <div className={css.helpBody}>
+          {helpSectionsOf(props.labels).map(section => (
+            <div key={section.title}>
+              <div className={css.helpSection}>{section.title}</div>
+              <div className={css.helpText}>{section.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
 }
 
 /**
@@ -377,6 +484,7 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<readonly JournalSearchHit[] | undefined>(undefined)
   const [searchFailure, setSearchFailure] = useState<string | undefined>(undefined)
+  const [helpOpen, setHelpOpen] = useState(false)
   const [highlight, setHighlight] = useState<string | undefined>(undefined)
   const root = useRef<HTMLDivElement | null>(null)
 
@@ -518,8 +626,8 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
    * commits a changed draft, and closes an unchanged one.
    */
   const onDutyButton = (): void => {
-    // The two editors never share the card: opening one closes the other.
-    if (!editingDuty) { closeSearch(); return openDuty() }
+    // The card holds one panel at a time: opening one closes the others.
+    if (!editingDuty) { closeSearch(); closeHelp(); return openDuty() }
     if (dutyChanged) void commitDuty()
     else closeDuty()
   }
@@ -542,8 +650,18 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
   /** Open search over the calendar; the duty editor and search never share the card. */
   const openSearch = (): void => {
     closeDuty()
+    closeHelp()
     setSearchOpen(true)
   }
+
+  /** Open the guide over the calendar; like the other panels it holds the card alone. */
+  const openHelp = (): void => {
+    closeDuty()
+    closeSearch()
+    setHelpOpen(true)
+  }
+
+  const closeHelp = (): void => setHelpOpen(false)
 
   /** Show one hit: switch month and day, leave search, then let the highlight effect scroll to it. */
   const pickHit = (hit: JournalSearchHit): void => {
@@ -559,6 +677,16 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
         <button type="button" className={css.nav} onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
         <span className={css.month}>{label}</span>
         <div className={css.actions}>
+          <button
+            type="button"
+            className={css.edit}
+            aria-label={props.labels.help}
+            title={props.labels.help}
+            aria-expanded={helpOpen}
+            onClick={() => { if (helpOpen) closeHelp(); else openHelp() }}
+          >
+            <span className={css.glyph} aria-hidden="true">?</span>
+          </button>
           <button
             type="button"
             className={css.edit}
@@ -610,6 +738,8 @@ export function CalendarCard(props: CalendarCardProps): ReactNode {
           onDiscard={closeDuty}
         />
       ) : null}
+
+      {helpOpen ? <HelpPopover labels={props.labels} onClose={closeHelp} /> : null}
 
       <div className={css.weekdays}>
         {props.labels.weekdays.map((name, index) => <span key={`w${index}`}>{name}</span>)}
