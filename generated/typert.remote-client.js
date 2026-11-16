@@ -12,7 +12,7 @@ const _deepseek_ai_dsh_experimental_journal_journal_day_result$schema = () => (_
   'entries': z.array(z.object({
   'id': z.string().readonly().describe('Stable identity; repeating the same id is idempotent.'),
   'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly().describe('Which section of the day it belongs to.'),
-  'time': z.string().readonly().describe('Local time, `HH:MM` or `HH:MM:SS`.'),
+  'time': z.string().readonly().optional().describe('Local time, `HH:MM` or `HH:MM:SS`.'),
   'title': z.string().readonly().describe('One-line summary shown as the entry\'s main line.'),
   'tag': z.union([z.literal("other"), z.literal("work"), z.literal("study"), z.literal("life"), z.literal("health")]).readonly().optional().describe('The one tag the card shows as a chip and search matches.'),
   'done': z.boolean().readonly().optional().describe('Present for `todo` only: whether it is done.'),
@@ -44,7 +44,7 @@ const _deepseek_ai_dsh_experimental_journal_journal_search_result$schema = () =>
   'entry': z.object({
   'id': z.string().readonly().describe('Stable identity; repeating the same id is idempotent.'),
   'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly().describe('Which section of the day it belongs to.'),
-  'time': z.string().readonly().describe('Local time, `HH:MM` or `HH:MM:SS`.'),
+  'time': z.string().readonly().optional().describe('Local time, `HH:MM` or `HH:MM:SS`.'),
   'title': z.string().readonly().describe('One-line summary shown as the entry\'s main line.'),
   'tag': z.union([z.literal("other"), z.literal("work"), z.literal("study"), z.literal("life"), z.literal("health")]).readonly().optional().describe('The one tag the card shows as a chip and search matches.'),
   'done': z.boolean().readonly().optional().describe('Present for `todo` only: whether it is done.'),
@@ -63,7 +63,7 @@ let _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema$value
 const _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema = () => (_deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema$value ??= z.object({
   'id': z.string().readonly().describe('Stable identity; repeating the same id is idempotent.'),
   'kind': z.union([z.literal("todo"), z.literal("memory")]).readonly().describe('Which section of the day it belongs to.'),
-  'time': z.string().readonly().describe('Local time, `HH:MM` or `HH:MM:SS`.'),
+  'time': z.string().readonly().optional().describe('Local time, `HH:MM` or `HH:MM:SS`.'),
   'title': z.string().readonly().describe('One-line summary shown as the entry\'s main line.'),
   'tag': z.union([z.literal("other"), z.literal("work"), z.literal("study"), z.literal("life"), z.literal("health")]).readonly().optional().describe('The one tag the card shows as a chip and search matches.'),
   'done': z.boolean().readonly().optional().describe('Present for `todo` only: whether it is done.'),
@@ -125,9 +125,9 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         typeSymbol: 'dsh-journal-calendar/types#JournalDay',
         create: _deepseek_ai_dsh_experimental_journal_journal_day_result$schema,
         description: 'the day\'s entries, or an empty day when the file does not exist.',
-        jsonSchema: {"type":"object","properties":{"version":{"type":"number","const":1},"date":{"type":"string"},"entries":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string","description":"Stable identity; repeating the same id is idempotent."},"kind":{"type":"string","enum":["todo","memory"],"description":"Which section of the day it belongs to."},"time":{"type":"string","description":"Local time, `HH:MM` or `HH:MM:SS`."},"title":{"type":"string","description":"One-line summary shown as the entry's main line."},"tag":{"type":"string","enum":["other","work","study","life","health"],"description":"The one tag the card shows as a chip and search matches."},"done":{"type":"boolean","description":"Present for `todo` only: whether it is done."},"sessionId":{"type":"string","description":"Live Session that produced the entry, when the caller had one."},"turn":{"type":"number","description":"Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there."},"step":{"type":"number","description":"Step within {@link turn}, when the recording happened inside one."}},"required":["id","kind","time","title"],"additionalProperties":true}}},"required":["version","date","entries"],"additionalProperties":true},
+        jsonSchema: {"type":"object","properties":{"version":{"type":"number","const":1},"date":{"type":"string"},"entries":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string","description":"Stable identity; repeating the same id is idempotent."},"kind":{"type":"string","enum":["todo","memory"],"description":"Which section of the day it belongs to."},"time":{"type":"string","description":"Local time, `HH:MM` or `HH:MM:SS`."},"title":{"type":"string","description":"One-line summary shown as the entry's main line."},"tag":{"type":"string","enum":["other","work","study","life","health"],"description":"The one tag the card shows as a chip and search matches."},"done":{"type":"boolean","description":"Present for `todo` only: whether it is done."},"sessionId":{"type":"string","description":"Live Session that produced the entry, when the caller had one."},"turn":{"type":"number","description":"Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there."},"step":{"type":"number","description":"Step within {@link turn}, when the recording happened inside one."}},"required":["id","kind","title"],"additionalProperties":true}}},"required":["version","date","entries"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":382,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":376,"column":9},
     },
     'journal/duty': {
       service: 'journal',
@@ -143,7 +143,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'the text the next prompt assembly carries and whether a file backs it.',
         jsonSchema: {"type":"object","properties":{"text":{"type":"string","description":"The duty text the next prompt assembly carries."},"customized":{"type":"boolean","description":"Whether a custom duty file is in effect; `false` means the built-in sentence."}},"required":["text","customized"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":468,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":462,"column":9},
     },
     'journal/month': {
       service: 'journal',
@@ -176,7 +176,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'one row per day that has entries, ascending by date.',
         jsonSchema: {"type":"array","items":{"type":"object","properties":{"date":{"type":"string","description":"`YYYY-MM-DD`."},"total":{"type":"number","description":"Entries that day."},"memories":{"type":"number","description":"`memory` entries that day."},"todos":{"type":"number","description":"`todo` entries that day."},"todosPending":{"type":"number","description":"`todo` entries still open that day."}},"required":["date","total","memories","todos","todosPending"],"additionalProperties":true}},
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":403,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":397,"column":9},
     },
     'journal/search': {
       service: 'journal',
@@ -206,9 +206,9 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         typeSymbol: 'dsh-journal-calendar#journal/search:result',
         create: _deepseek_ai_dsh_experimental_journal_journal_search_result$schema,
         description: 'matching entries with the day each one lives in.',
-        jsonSchema: {"type":"array","items":{"type":"object","properties":{"date":{"type":"string","description":"`YYYY-MM-DD` of the day file the entry lives in."},"entry":{"type":"object","properties":{"id":{"type":"string","description":"Stable identity; repeating the same id is idempotent."},"kind":{"type":"string","enum":["todo","memory"],"description":"Which section of the day it belongs to."},"time":{"type":"string","description":"Local time, `HH:MM` or `HH:MM:SS`."},"title":{"type":"string","description":"One-line summary shown as the entry's main line."},"tag":{"type":"string","enum":["other","work","study","life","health"],"description":"The one tag the card shows as a chip and search matches."},"done":{"type":"boolean","description":"Present for `todo` only: whether it is done."},"sessionId":{"type":"string","description":"Live Session that produced the entry, when the caller had one."},"turn":{"type":"number","description":"Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there."},"step":{"type":"number","description":"Step within {@link turn}, when the recording happened inside one."}},"required":["id","kind","time","title"],"additionalProperties":true,"description":"The matching entry, exactly as stored."}},"required":["date","entry"],"additionalProperties":true}},
+        jsonSchema: {"type":"array","items":{"type":"object","properties":{"date":{"type":"string","description":"`YYYY-MM-DD` of the day file the entry lives in."},"entry":{"type":"object","properties":{"id":{"type":"string","description":"Stable identity; repeating the same id is idempotent."},"kind":{"type":"string","enum":["todo","memory"],"description":"Which section of the day it belongs to."},"time":{"type":"string","description":"Local time, `HH:MM` or `HH:MM:SS`."},"title":{"type":"string","description":"One-line summary shown as the entry's main line."},"tag":{"type":"string","enum":["other","work","study","life","health"],"description":"The one tag the card shows as a chip and search matches."},"done":{"type":"boolean","description":"Present for `todo` only: whether it is done."},"sessionId":{"type":"string","description":"Live Session that produced the entry, when the caller had one."},"turn":{"type":"number","description":"Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there."},"step":{"type":"number","description":"Step within {@link turn}, when the recording happened inside one."}},"required":["id","kind","title"],"additionalProperties":true,"description":"The matching entry, exactly as stored."}},"required":["date","entry"],"additionalProperties":true}},
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":318,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":312,"column":9},
     },
     'journal/setDone': {
       service: 'journal',
@@ -272,9 +272,9 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         typeSymbol: 'dsh-journal-calendar/types#JournalEntry',
         create: _deepseek_ai_dsh_experimental_journal_journal_setDone_result$schema,
         description: 'the updated entry.',
-        jsonSchema: {"type":"object","properties":{"id":{"type":"string","description":"Stable identity; repeating the same id is idempotent."},"kind":{"type":"string","enum":["todo","memory"],"description":"Which section of the day it belongs to."},"time":{"type":"string","description":"Local time, `HH:MM` or `HH:MM:SS`."},"title":{"type":"string","description":"One-line summary shown as the entry's main line."},"tag":{"type":"string","enum":["other","work","study","life","health"],"description":"The one tag the card shows as a chip and search matches."},"done":{"type":"boolean","description":"Present for `todo` only: whether it is done."},"sessionId":{"type":"string","description":"Live Session that produced the entry, when the caller had one."},"turn":{"type":"number","description":"Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there."},"step":{"type":"number","description":"Step within {@link turn}, when the recording happened inside one."}},"required":["id","kind","time","title"],"additionalProperties":true},
+        jsonSchema: {"type":"object","properties":{"id":{"type":"string","description":"Stable identity; repeating the same id is idempotent."},"kind":{"type":"string","enum":["todo","memory"],"description":"Which section of the day it belongs to."},"time":{"type":"string","description":"Local time, `HH:MM` or `HH:MM:SS`."},"title":{"type":"string","description":"One-line summary shown as the entry's main line."},"tag":{"type":"string","enum":["other","work","study","life","health"],"description":"The one tag the card shows as a chip and search matches."},"done":{"type":"boolean","description":"Present for `todo` only: whether it is done."},"sessionId":{"type":"string","description":"Live Session that produced the entry, when the caller had one."},"turn":{"type":"number","description":"Turn of {@link sessionId} the entry was recorded in; the card opens the conversation there."},"step":{"type":"number","description":"Step within {@link turn}, when the recording happened inside one."}},"required":["id","kind","title"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":439,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":433,"column":9},
     },
     'journal/setDuty': {
       service: 'journal',
@@ -306,7 +306,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'the effective duty after the write.',
         jsonSchema: {"type":"object","properties":{"text":{"type":"string","description":"The duty text the next prompt assembly carries."},"customized":{"type":"boolean","description":"Whether a custom duty file is in effect; `false` means the built-in sentence."}},"required":["text","customized"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":481,"column":9},
+      sourceLocation: {"file":"packages/experimental/journal/src/service.ts","line":475,"column":9},
     },
   },
 }, z)

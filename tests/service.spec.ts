@@ -54,6 +54,19 @@ describe('resolveJournalDirectory', () => {
 })
 
 describe('record()', () => {
+  it('keeps date-only todos and memories without inventing a time across reads and completion', async () => {
+    const { journal, dir } = await mounted()
+    const todo = await journal.record({ title: 'play tennis', kind: 'todo', date: '2026-03-04' })
+    await journal.record({ title: 'met a friend', kind: 'memory', date: '2026-03-04' })
+    expect(todo).not.toHaveProperty('time')
+    const day = await journal.readDay('2026-03-04')
+    expect(day.entries).toHaveLength(2)
+    for (const entry of day.entries) expect(entry).not.toHaveProperty('time')
+    expect(await readFile(join(dir, '2026-03-04.json'), 'utf8')).not.toContain('"time"')
+    await journal.setDone(todo.id, true, '2026-03-04')
+    expect((await journal.readDay('2026-03-04')).entries[0]).toMatchObject({ done: true })
+  })
+
   it('writes one file per day, named for the date it recorded', async () => {
     const { journal, dir } = await mounted()
     const entry = await journal.record({ title: 'run 3km', kind: 'todo', date: '2026-03-04', time: '20:00' })

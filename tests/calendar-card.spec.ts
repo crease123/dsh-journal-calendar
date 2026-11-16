@@ -175,6 +175,21 @@ describe('CalendarCard render', () => {
     expect(html).toContain('>学习</em>')
   })
 
+  it('renders date-only todos and memories without a time label', () => {
+    const todo = renderToStaticMarkup(createElement(TodoRow, {
+      labels: labelsOf(en), entry: { id: 'date-only', kind: 'todo', title: 'play tennis' },
+      pending: false, onToggle: () => undefined,
+    }))
+    const memory = renderToStaticMarkup(createElement(MemoryEntry, {
+      labels: labelsOf(en), entry: { id: 'date-only-memory', kind: 'memory', title: 'met a friend' },
+      openSource: () => undefined,
+    }))
+    expect(todo).toContain('play tennis')
+    expect(memory).toContain('met a friend')
+    expect(todo + memory).not.toContain('undefined')
+    expect(todo + memory).not.toContain('class="time"')
+  })
+
   it('draws a todo with its tag between the title and the time', () => {
     const html = renderToStaticMarkup(createElement(TodoRow, {
       labels: labelsOf(zh),

@@ -91,7 +91,7 @@ export function registerJournalTool(ctx: Context, directory: string): void {
       },
       time: {
         type: 'string',
-        description: 'Local time, HH:MM or HH:MM:SS. Omit to use the current time.',
+        description: 'Event time, HH:MM or HH:MM:SS. Omit when unknown or when only the day is specified; never invent a time.',
       },
     },
     output: {
@@ -102,14 +102,14 @@ export function registerJournalTool(ctx: Context, directory: string): void {
           id: { type: 'string', required: true, description: 'Stable entry identity; repeating it is idempotent.' },
           kind: { type: 'string', required: true, enum: ['todo', 'memory'], description: 'Stored entry kind.' },
           date: { type: 'string', required: true, description: 'Journal day the entry landed in.' },
-          time: { type: 'string', required: true, description: 'Stored entry time.' },
+          time: { type: 'string', description: 'Stored event time, if provided.' },
           title: { type: 'string', required: true, description: 'Stored title.' },
           total: { type: 'integer', required: true, description: 'Entries in that day after this write.' },
         },
       },
       render: (_args, value) => [{
         type: 'text',
-        text: `Recorded ${value.kind} ${value.date} ${value.time}: ${value.title} (${value.total} entries that day)`,
+        text: `Recorded ${value.kind} ${value.date}${value.time === undefined ? '' : ` ${value.time}`}: ${value.title} (${value.total} entries that day)`,
       }],
     },
     async execute(args, exec) {
@@ -129,7 +129,7 @@ export function registerJournalTool(ctx: Context, directory: string): void {
         id: entry.id,
         kind: entry.kind,
         date: day.date,
-        time: entry.time,
+        ...entry.time === undefined ? {} : { time: entry.time },
         title: entry.title,
         total: day.entries.length,
       }

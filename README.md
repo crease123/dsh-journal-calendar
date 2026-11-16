@@ -1,5 +1,6 @@
 # dsh-journal-calendar
 
+
 English | [中文](README.zh.md)
 
 A daily journal the agent keeps on its own, for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). One sentence it adds to the system prompt makes recording part of the agent's job, so it writes what you did and what you intend to do into one JSON file per day, and the Web UI draws those files as a calendar in the right sidebar.
@@ -10,7 +11,7 @@ If the plugin is useful to you, a star on [the repository](https://github.com/cr
 
 ## Contents
 
-Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest release `0.6.0`.
+Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest release `0.6.1`.
 
 - [What it does](#what-it-does) — recording, the editable duty sentence, the five tags, search, jumps back to a conversation, day markers, and the button that opens the project
   - [The duty sentence](#the-duty-sentence) · [The five tags](#the-five-tags) · [Searching the journal](#searching-the-journal) · [Jumping back to the conversation](#jumping-back-to-the-conversation) · [Day markers and checking off](#day-markers-and-checking-off) · [The button in the header](#the-button-in-the-header)
@@ -29,6 +30,8 @@ Status: verified against DSH `0.2.2-rc.1` on Node 22.19.0 and 26.4.0; latest rel
 ## What it does
 
 The plugin registers the `journal_record` tool and one prompt sentence telling the agent that recording is part of its job. The tool takes a `kind` (`todo` = an intention, checkable; `memory` = something that happened), a one-line `title`, one `tag`, and optionally `date` and `time`. Recording the same `id` twice returns the stored entry instead of appending a second one, so a retried tool call is safe.
+
+Entries may specify only a date: `time` is optional for both todos and memories. When omitted, no current time is added and the calendar shows no time. Remove the entire `time` property when editing JSON; do not leave a key without a value.
 
 Everything the agent writes lands on its day in the card, and everything in the card can be driven from the card: the duty sentence is editable there, days are marked by what they hold, entries are searchable, and a memory links back to the conversation that recorded it.
 
@@ -94,7 +97,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 Then reload the page. The **日历 / Journal** tab appears in the right sidebar.
 
-That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.6.0`. A bare name resolves to the newest release pnpm's supply-chain policy already trusts: that policy holds back any version published less than 24 hours ago, so pin the exact version to install the latest one right after a release. To remove it again:
+That resolves the published package from your configured npm registry and ships a prebuilt tarball, so nothing is compiled on your machine and no build authorization is needed. `dsh plugin` forwards to pnpm, so pnpm must be on the machine. Pin a version with `dsh-journal-calendar@0.6.1`. A bare name resolves to the newest release pnpm's supply-chain policy already trusts: that policy holds back any version published less than 24 hours ago, so pin the exact version to install the latest one right after a release. To remove it again:
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
@@ -105,7 +108,7 @@ dsh plugin --profile web remove dsh-journal-calendar
 Every release attaches that same prebuilt tarball to its GitHub release, which covers a registry that has not mirrored the release yet:
 
 ```sh
-dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.1/dsh-journal-calendar-0.6.1.tgz
 ```
 
 ### Installing from the repository instead
@@ -218,7 +221,7 @@ To list it in the [dsh-market](https://github.com/dsh-market/dsh-market) plugin 
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
-tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.1/dsh-journal-calendar-0.6.1.tgz
 description:
   en: "An agent-kept daily journal: one sentence injected into the system prompt makes recording one of the agent's duties, so what you have done and what you intend to do is written as dated todos and memories, one JSON file per day under the DSH home, and drawn on the right sidebar's month calendar — a hollow ring while a todo is still open, a green dot once every todo is done, a blue dot when the day holds only memories; that injected sentence is rewritten from the calendar itself, which is how you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) drawn as a colour-coded chip, todos can be checked off from the card, titles and tags are searchable across every day, and clicking a memory opens the conversation that recorded it and stops at that turn; the ? beside the month heading opens the project on GitHub."
   zh: '助手主动维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是这些事被写成带日期的待办与记事，存放在 DSH home 下一天一个的 JSON 文件里，并画在右侧栏的月历上——有待办没做完的那天是空心圈，待办都做完是绿点，只记了记事的那天是蓝点；这句话可以直接在日历上改写，用它调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可以在卡片上勾选，全部日期的标题与标签都能搜索，点击一条记在对话里的记录会打开那次会话并停在对应轮次；月份标题旁的 ? 打开 GitHub 上的项目仓库。'

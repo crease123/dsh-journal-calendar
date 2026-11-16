@@ -172,7 +172,7 @@ export function SearchPanel(props: SearchPanelProps): ReactNode {
                   <span className={css.searchKind}>
                     {hit.entry.kind === 'todo' ? props.labels.todo : props.labels.memory}
                   </span>
-                  <span className={css.time}>{hit.date} · {hit.entry.time}</span>
+                  <span className={css.time}>{hit.date}{hit.entry.time ? ` · ${hit.entry.time}` : ''}</span>
                 </span>
                 <span className={css.searchHitTitle}>{hit.entry.title}</span>
                 {hit.entry.tag === undefined ? null : (
@@ -223,7 +223,7 @@ export function TodoRow({ labels, entry, pending, onToggle }: {
       <span className={clsx(css.todoMark, entry.done === true && css.todoMarkDone)} />
       <span className={clsx(css.todoTitle, entry.done === true && css.todoFinished)}>{entry.title}</span>
       {entry.tag === undefined ? null : <TagChip tag={entry.tag} label={labels.tags[entry.tag]} />}
-      <span className={css.time}>{entry.time}</span>
+      {entry.time && <span className={css.time}>{entry.time}</span>}
     </button>
   )
 }
@@ -240,7 +240,7 @@ export function MemoryEntry({ labels, entry, openSource }: {
         <span className={css.chips}>
           {entry.tag === undefined ? null : <TagChip tag={entry.tag} label={labels.tags[entry.tag]} />}
         </span>
-        <span className={css.time}>{entry.time}</span>
+        {entry.time && <span className={css.time}>{entry.time}</span>}
       </div>
       {entry.sessionId === undefined
         // No Session recorded it (hand-edited file, or a write outside a

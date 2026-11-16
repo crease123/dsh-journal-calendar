@@ -27,7 +27,7 @@ export interface JournalEntry {
   /** Which section of the day it belongs to. */
   readonly kind: JournalEntryKind
   /** Local time, `HH:MM` or `HH:MM:SS`. */
-  readonly time: string
+  readonly time?: string
   /** One-line summary shown as the entry's main line. */
   readonly title: string
   /** The one tag the card shows as a chip and search matches. */
@@ -65,7 +65,7 @@ export interface JournalEntryInput {
   readonly step?: number
   /** `YYYY-MM-DD`; defaults to the local today. */
   readonly date?: string
-  /** Local time; defaults to now. */
+  /** Optional event time; omitted when only the day is known. */
   readonly time?: string
   /** Explicit identity; defaults to a fresh uuid. */
   readonly id?: string

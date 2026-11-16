@@ -1,5 +1,6 @@
 # dsh-journal-calendar
 
+
 [English](README.md) | 中文
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）用的每日日志与日历，由助手主动维护。它往系统提示词里加一句话，把「记录」变成助手的职责之一，于是「你做了什么、你打算做什么」会被写进一天一个的 JSON 文件，Web UI 再把这些文件画成右侧栏里的日历。
@@ -10,7 +11,7 @@
 
 ## 目录
 
-当前状态：已在 DSH `0.2.2-rc.1`（Node 22.19.0 / 26.4.0）上验证，最新发布 `0.6.0`。
+当前状态：已在 DSH `0.2.2-rc.1`（Node 22.19.0 / 26.4.0）上验证，最新发布 `0.6.1`。
 
 - [功能介绍](#功能介绍) —— 记录什么、可改的职责提示词、五个标签、搜索、跳回对话、日期标记，以及卡片里那个打开项目仓库的按钮
   - [那句职责提示词](#那句职责提示词) · [五个标签](#五个标签) · [搜索条目](#搜索条目) · [跳回对话](#跳回对话) · [日期标记与勾选](#日期标记与勾选) · [卡片里的那个按钮](#卡片里的那个按钮)
@@ -29,6 +30,8 @@
 ## 功能介绍
 
 插件注册 `journal_record` 工具，外加一句提示词，告诉 agent 记录是它的职责之一。工具参数：`kind`（`todo` = 打算做的事，可勾选；`memory` = 已经发生的事）、单行 `title`、一个 `tag`，以及可选的 `date`、`time`。同一个 `id` 记两次会返回已存在的那条，而不会追加第二条，所以工具调用重试是安全的。
+
+待办和已发生事项都可以只记录日期：`time` 为可选字段，省略时不会自动补当前时间，卡片也不显示时间。手动编辑 JSON 时请删除整个 `time` 字段，不要保留没有值的键。
 
 助手写下的每条记录都会落到卡片上对应的那一天，而卡片上的东西也都能从卡片上操作：那句职责提示词可以直接改，日期按内容标记，条目可搜索，一条记忆还能跳回记录它的那次对话。
 
@@ -94,7 +97,7 @@ dsh plugin --profile web add dsh-journal-calendar
 
 刷新页面，右侧栏出现 **日历** 标签页。
 
-它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.6.0`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
+它从你配置的 npm 源取已发布的包，里面就是预构建产物，**不在你机器上编译，也不需要任何构建授权**。`dsh plugin` 会转发给 pnpm，所以机器上需要 pnpm；要锁版本就写 `dsh-journal-calendar@0.6.1`。裸包名会解析到 pnpm 供应链策略认可的最新版本——该策略会暂缓 24 小时内发布的版本，所以刚发版时要装最新版就写精确版本。卸载：
 
 ```sh
 dsh plugin --profile web remove dsh-journal-calendar
@@ -105,7 +108,7 @@ dsh plugin --profile web remove dsh-journal-calendar
 每次发版都会把同一份预构建产物挂到 GitHub Release 上，适合你所用的源还没同步该版本的场合：
 
 ```sh
-dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
+dsh plugin --profile web add https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.1/dsh-journal-calendar-0.6.1.tgz
 ```
 
 ### 改为从仓库安装
@@ -218,10 +221,10 @@ npm 现在要求发布时具备双因素认证。账号没开 2FA、或 token �
 url: https://github.com/crease123/dsh-journal-calendar
 name: crease123/dsh-journal-calendar
 category: memory
-tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.0/dsh-journal-calendar-0.6.0.tgz
+tarball: https://github.com/crease123/dsh-journal-calendar/releases/download/v0.6.1/dsh-journal-calendar-0.6.1.tgz
 description:
   en: "A journal the agent keeps on its own: one sentence injected into the system prompt makes recording one of its duties, so it notes what you have done and what you intend to do, and each dated todo or memory lands on its day in the right sidebar's month calendar, marked per day by open todos, finished todos or memories; that injected sentence is editable from the calendar itself, letting you set how eagerly and how the agent records; every entry carries one of five tags (work, study, life, health, other) as a colour-coded chip, todos are checkable, all entries are searchable by title and tag, and clicking a memory opens the session that recorded it and scrolls to that turn; the journal_record tool writes one JSON file per day under the DSH home."
-  zh: '助手主动替你维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是每条带时间的待办或记事都会落到右侧栏月历上对应的那一天，单元格按「有待办未完成 / 待办已完成 / 只有记事」标记；这句话可以直接在日历上改写，用来调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可勾选，全部记录可按标题与标签搜索，点击一条记忆会打开记录它的那次会话并滚动到对应轮次；条目由 journal_record 工具写入 DSH home 下一天一个的 JSON 文件。'
+  zh: '助手主动替你维护的每日日志：它往系统提示词里注入一句话，把「记录用户做过的事和打算做的事」列为助手的职责，于是每条待办或记事（时间可省略）都会落到右侧栏月历上对应的那一天，单元格按「有待办未完成 / 待办已完成 / 只有记事」标记；这句话可以直接在日历上改写，用来调整助手记忆的主动性与策略；每条记录带五个标签之一（工作 / 学习 / 生活 / 健康 / 其他）并显示为同色 chip，待办可勾选，全部记录可按标题与标签搜索，点击一条记忆会打开记录它的那次会话并滚动到对应轮次；条目由 journal_record 工具写入 DSH home 下一天一个的 JSON 文件。'
 ```
 
 描述从「插件做了什么」写起，而不是从「数据怎么存」写起：注册表里已经有 `AloneFu/dsh-calendar-plugin`，同样在右侧栏画带每日标记的月历。区别在于**条目是什么、由谁写**——那个插件是对已有 Obsidian 知识库的视图，这个则是由助手自己维护 DSH home 下的日期文件。注册表评审会把条目和插件代码对照，并检查是否已被现有条目覆盖，所以这一行必须把区别说清楚。截图另由本仓库的 `screenshots.json` 声明，换图不必再向注册表提 PR。

@@ -101,15 +101,6 @@ function localDate(now = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
-/** Local time; entries carry seconds because the card renders them. */
-function localTime(now = new Date()): string {
-  return [
-    String(now.getHours()).padStart(2, '0'),
-    String(now.getMinutes()).padStart(2, '0'),
-    String(now.getSeconds()).padStart(2, '0'),
-  ].join(':')
-}
-
 /** Parse and validate one day file; never repairs in place. */
 function parseDay(raw: string, path: string): JournalDay {
   let parsed: unknown
@@ -143,11 +134,14 @@ function parseDay(raw: string, path: string): JournalDay {
       throw new RemoteError('journal/malformed', `${path} entry ${index} is not an object`, { path })
     }
     const item = entry as Record<string, unknown>
-    for (const field of ['id', 'time', 'title'] as const) {
+    for (const field of ['id', 'title'] as const) {
       const value = item[field]
       if (typeof value !== 'string' || value === '') {
         throw new RemoteError('journal/malformed', `${path} entry ${index} is missing ${field}`, { path })
       }
+    }
+    if (item['time'] !== undefined && (typeof item['time'] !== 'string' || item['time'] === '')) {
+      throw new RemoteError('journal/malformed', `${path} entry ${index} has an invalid time`, { path })
     }
     // Files written before kinds existed hold memories.
     const kind = item['kind'] === undefined ? 'memory' : item['kind']
@@ -157,7 +151,7 @@ function parseDay(raw: string, path: string): JournalDay {
     return {
       id: item['id'] as string,
       kind,
-      time: item['time'] as string,
+      ...item['time'] === undefined ? {} : { time: item['time'] as string },
       title: item['title'] as string,
       ...legacyTag(item),
       ...typeof item['done'] === 'boolean' ? { done: item['done'] } : {},
@@ -279,7 +273,7 @@ export class Journal extends TypertRemoteService {
     const entry: JournalEntry = {
       id: input.id ?? randomUUID(),
       kind,
-      time: input.time ?? localTime(),
+      ...input.time === undefined ? {} : { time: input.time },
       title: input.title.trim(),
       ...tag === undefined ? {} : { tag },
       // A todo always carries its flag; the card's checkbox reads exactly this.
