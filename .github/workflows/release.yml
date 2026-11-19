@@ -1,0 +1,100 @@
+# Release on a v* tag.
+#
+# The workflow automates everything up to, but not including, the 2FA approval:
+#
+#   build -> test -> pack -> GitHub Release (with the tarball) -> stage on npm
+#
+# A human then approves the staged version, exactly as DEV.md describes:
+#
+#   npm stage approve <stage-id>
+#
+# Why it stops there: npm requires proof-of-presence (2FA) for the final
+# publish, so the last step cannot be automated with a normal token. Staging is
+# the automation boundary — which also makes this Continuous *Delivery* rather
+# than Continuous *Deployment*: the pipeline is ready to ship, a person decides.
+#
+# Required secret: NPM_TOKEN — an npm token with publish rights for this package.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # create the GitHub Release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # `npm stage` needs npm >= 11.6, so pin it instead of relying on whatever
+      # version ships with the Node image.
+      - run: npm install -g npm@12 && npm --version
+
+      - run: pnpm install --frozen-lockfile
+
+      # Fail before building if the tag and the manifest disagree.
+      - name: Check that the tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+
+      - run: pnpm run build
+      - run: pnpm test
+      - run: pnpm pack
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            "./dsh-journal-calendar-${GITHUB_REF_NAME#v}.tgz"
+
+      # Staged publish defers the 2FA check, so this step works with a normal
+      # publish token and produces an installable version only after approval.
+      - name: Stage on npm
+        id: stage
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          output="$(npm stage publish "./dsh-journal-calendar-${GITHUB_REF_NAME#v}.tgz" \
+            --registry=https://registry.npmjs.org/)"
+          echo "$output"
+          stage_id="$(printf '%s\n' "$output" | grep -oE 'stage-[0-9a-zA-Z-]+' | head -1)"
+          echo "stage_id=$stage_id" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize
+        run: |
+          {
+            echo "### Staged for approval"
+            echo ""
+            echo "Stage id: \`${{ steps.stage.outputs.stage_id }}\`"
+            echo ""
+            echo "Approve with 2FA, then check the result:"
+            echo ""
+            echo '```sh'
+            echo "npm stage approve ${{ steps.stage.outputs.stage_id }}"
+            echo "npm view dsh-journal-calendar version"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
